@@ -1,9 +1,13 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.0 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.2 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.1](specifiche-funzionali.md) (7 ottobre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
-**Data:** 29 ottobre 2026
+**Data:** 31 ottobre 2026
+
+La 2.1 non aggiunge requisiti. Registra due comportamenti visti sull’editor di riferimento il 31 ottobre 2026, già coperti da PLC-06, TRP-12, ITN-01 e ITN-03: lo spostamento di un luogo dalla lista a un giorno resta dopo un reload, e la tratta compare nel gesto, non in un job successivo. Non si copia lo schema né le API di quel prodotto.
+
+La 2.2 confronta [PlaneIT.docx](PlaneIT.docx) con questo piano. Quel file non sostituisce le specifiche: il dettaglio è al §19.
 
 Convenzioni del documento:
 
@@ -26,6 +30,7 @@ Convenzioni del documento:
 7. Ogni stringa visibile all'utente è marcata per la traduzione (`gettext` / `t()`), con testo in italiano e in inglese.
 8. Non scrivere segreti nel codice e non fare commit di `.env`. Le chiavi esterne si leggono da variabili d'ambiente (§10). Senza chiave si usa il provider `mock`.
 9. Se un task richiede una decisione aperta non ancora presa (§4), fermati e segnalalo. Non scegliere al posto del team.
+10. `docs/PlaneIT.docx` non è una specifica di implementazione. Non aggiungere i suoi campi account, la splash animata né gli endpoint di login descritti lì (§19).
 
 ---
 
@@ -100,7 +105,7 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 | **D1** | **Provider mappe e luoghi** (costi, cache consentita, qualità in Italia, embed, export verso Google Maps) | §11, §13, §18.2 | **Task 1A.3 (schema `places`)**. La Fase 0 e `maps` con mock possono partire | Decidere entro la fine della Fase 0. Documentare in `docs/adr/0001-provider-mappe.md` quali campi si possono salvare e per quanto tempo |
 | **D2** | **Editor SPA React o template Django + HTMX** | non nelle specifiche (il piano originale dice SPA) | Task 0.8 | SPA React (opzione A), se il team conosce React. Altrimenti B |
 | **D3** | **App nella radice del progetto Django o in `apps/`** | stato del repo | Task 0.1 | **Radice (consigliato)** |
-| D4 | Nome del prodotto e dominio | §18.1 | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local` |
+| D4 | Nome del prodotto e dominio | §18.1. `docs/PlaneIT.docx` propone «PlaneIT» e lo scheme `planeit://` | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local`. Il nome del docx non si adotta finché D4 non è chiusa |
 | D5 | Flutter o React Native per l'app | §18.3 | Fase 2 (app) | Fuori dal perimetro di questo piano |
 | D6 | Guide della community visibili subito o dopo moderazione | §18.4, GDE-05 | Fase 2 | — |
 | D7 | Listino Pro (riferimento: 39,99 USD/anno, prova di 7 giorni; mensile come estensione) | §18.5, SUB-01, NEW-09 | Fase 2 | — |
@@ -108,7 +113,7 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 | D9 | Servizio di email in entrata in produzione (webhook) | §11 "Email in entrata" | Rilascio della Fase 1 | *Decisione proposta:* un provider con webhook firmato |
 | D10 | Provider di meteo, stato voli, tassi di cambio, LLM, push | §11 | Cambi: Fase 1 (BDG-06). Gli altri: Fase 2/3 | Ogni provider sta dietro un adapter con mock |
 | D11 | Storage dei file in produzione | §12 (file privati) | Fase 2 (RES-06) | *Decisione proposta:* S3-compatibile con URL firmati |
-| D12 | Autenticazione dell'app mobile (token DRF o JWT) | §4.2 | Fase 2 | *Decisione proposta:* JWT (`djangorestframework-simplejwt`) |
+| D12 | Autenticazione dell'app mobile (token DRF o JWT) | §4.2. Il flusso auth di `docs/PlaneIT.docx` non è la specifica web | Fase 2 | *Decisione proposta:* JWT (`djangorestframework-simplejwt`) solo per l'app. Il web resta sessione e allauth (ACC-01): niente username obbligatorio, data di nascita, OTP, né `POST /api/v1/auth/login` |
 | D13 | Significato di "racconti" (§10 `guides`, §14 Fase 3) rispetto al diario (GDE-08) | §10, §14 | Fase 3 | Chiarire con chi ha scritto le specifiche |
 
 ---
@@ -134,7 +139,7 @@ I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da
 | Luogo | `Place` | `places` | provider, external_id, name, lat, lng, address, categories, short_description, photos, website, phone, opening_hours, rating, reviews_count, source, fetched_at, is_custom (PLC-08). **Quali campi si salvano dipende da D1** | univoco (provider, external_id) | 1A |
 | Voce luogo | `PlaceItem` | `places` | note, custom_photo, start_time?, end_time?, cost?, status (`idea`/`planned`/`done`) | FK `Trip`, FK `Place` | 1A |
 | Voce in lista | `ListEntry` | `places` | order | FK `Section(type=places_list)`, FK `PlaceItem` (una voce può stare in più liste, PLC-06) | 1A |
-| Tappa/elemento del giorno | `DayEntry` *(Decisione proposta)* | `itinerary` | kind (`place`/`note`/`checklist`), order, start_time?, end_time?, note | FK `Day`, FK `PlaceItem?` (al massimo un giorno per voce) | 1A |
+| Tappa/elemento del giorno | `DayEntry` *(Decisione proposta)* | `itinerary` | kind (`place`/`note`/`checklist`), order, note | FK `Day`, FK `PlaceItem?` (al massimo un giorno per voce). Gli orari di visita stanno su `PlaceItem` | 1A |
 | Tratta | `Leg` | `itinerary` | mode (`car`/`walk`/`transit`/`bike`/`taxi`/`flight`/`train`/`ferry`), duration_s?, distance_m?, geometry?, estimate_available, provider | FK `from_entry → DayEntry`, FK `to_entry → DayEntry` | 1A |
 | Prenotazione | `Reservation` | `reservations` | type (vedi nota), status, start_at, end_at, confirmation_code, supplier, price?, currency, source_email?, details (JSON per campi specifici: numero volo, aeroporti, scali, gate; check-in e check-out; ritiro e riconsegna; dal NEW-04: carrozza, posto, stazione), included_in_package (RES-10) | FK `Trip`, FK `Day?`, FK `Place?` | 1B |
 | (RES-03/04) Email in entrata | `InboundEmail` | `reservations` | raw (privato), from, subject, status (`received`/`parsed`/`unrecognized`/`error`), parser | FK `Trip`, FK `Reservation?` | 1B |
@@ -158,7 +163,9 @@ Note sul modello:
 - **Tipi di prenotazione.** Le specifiche hanno due elenchi diversi: RES-01 (volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato) e §6 (volo, alloggio, auto, treno, bus, traghetto, evento, altro). *Decisione proposta:* l'enum è l'unione dei due (`flight`, `lodging`, `car`, `restaurant`, `train`, `bus`, `ferry`, `cruise`, `event`, `other`). "Allegato" diventa un `Attachment` senza prenotazione.
 - **Mezzi di trasporto.** L'enum di `Leg` contiene già tutti i mezzi del §6. In Fase 1 l'interfaccia abilita auto, a piedi, trasporto pubblico e bici (ITN-04). Gli altri mezzi si abilitano in Fase 3 (ITN-10).
 - **Copertura del provider (§11).** Se il provider non fornisce una stima, `Leg.estimate_available = False` e l'interfaccia lo dice, senza inventare un tempo.
-- **Sezioni di sistema.** Creando un viaggio si creano le sezioni `itinerary`, `reservations` e `budget` con `is_system=True`, che non si cancellano (§6), e una lista "Senza titolo".
+- **Sezioni di sistema.** Creando un viaggio si creano le sezioni `itinerary`, `reservations` e `budget` con `is_system=True`, che non si cancellano (§6), e una lista "Senza titolo". I giorni restano `Day`, uno per data: non si adotta lo schema in cui il giorno è una sezione.
+- **Spostamento lista → giorno (PLC-06).** Il trascinamento singolo toglie la voce dalla lista e la mette nel giorno, in ordine. Copia e doppia appartenenza (la voce resta in lista e compare anche nel giorno) sono azioni esplicite, non l’effetto del trascinamento. Gli orari di visita restano su `PlaceItem` (§6); `DayEntry` tiene kind, ordine e nota e non duplica gli orari.
+- **Durabilità (TRP-12).** Lo spostamento è scritto sul server nella stessa operazione. Un reload del piano mostra il luogo nel giorno. Nessun pulsante «Salva».
 - **Budget e valuta di riferimento** sono campi di `Trip` (§6).
 
 ---
@@ -467,7 +474,7 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 | --- | --- |
 | `e2e/test_acc15_01_viaggio_5_giorni.py` | §15.1 e criterio TRP-01 ("Roma", 12–16 giugno → 5 giorni vuoti e Roma sulla mappa) |
 | `e2e/test_acc15_02_dieci_luoghi.py` | §15.2: 10 luoghi, da ricerca e da una guida (criterio GDE-03: luogo aggiunto al giorno 2 e visibile sulla mappa) |
-| `e2e/test_acc15_03_orari_distanze.py` | §15.3: distribuzione sui giorni, orari, tempi e distanze (ITN-01..03) |
+| `e2e/test_acc15_03_orari_distanze.py` | §15.3: distribuzione sui giorni, orari, tempi e distanze (ITN-01..03). Dopo lo spostamento di un luogo dalla lista a un giorno, un reload lo mostra ancora in quel giorno, con la tratta verso la tappa successiva |
 | `e2e/test_acc15_04_mappa_filtrata.py` | §15.4: pin filtrati per giorno (MAP-03) |
 | `e2e/test_acc15_05_compagno_live.py` | §15.5: due browser; il secondo, con ruolo modifica, vede l'aggiornamento entro 5 s (§12 Sync) |
 | `e2e/test_acc15_06_volo_manuale_email.py` | §15.6 e criterio RES-03: volo inserito a mano più volo da email di prova, visibile nel giorno corretto entro 60 s |
@@ -590,7 +597,7 @@ Questa fase evita che `places`, `itinerary`, `reservations`, `budget` e `checkli
 **1A.1 `trips` (Dev B):** `Trip`, `TripDestination`, `Day`, `Section`, `Membership`, `Invite`, `ActivityEntry`, `NoteRevision`. Servizi `create_trip` (sezioni di sistema e giorni generati dalle date), `record_activity`. Policy `trips/policies.py` e test della matrice §7.
 **1A.2 `maps` (Dev C):** interfacce `PlaceProvider`, `RouteProvider`, `Geocoder`, `MockProvider` deterministico, selezione con `MAPS_PROVIDER`. Generatori di deep link per Google Maps e Apple Maps (ITN-05).
 **1A.3 `places` (Dev C), dopo D1:** `Place` (campi salvati secondo la licenza D1, con `fetched_at`), `PlaceItem`, `ListEntry`.
-**1A.4 `itinerary` (Dev C):** `DayEntry`, `Leg`. Servizio `recompute_legs(day)` in Celery.
+**1A.4 `itinerary` (Dev C):** `DayEntry`, `Leg`. Servizio `recompute_legs(day)` invocato dalla richiesta che sposta o riordina le tappe: la risposta include durata, distanza e geometria (ITN-01, ITN-03). Celery serve al ritento se il provider non risponde, non è l’unico percorso. Senza stima, `estimate_available = False` (§11).
 **1A.5 Realtime (Dev B):** consumer `ws/trips/<uuid>/`, gruppo `trip_<uuid>`, broadcast `on_commit` dai servizi.
 
 Checkpoint della Fase 1A:
@@ -609,7 +616,7 @@ Corrisponde a §14 Fase 1 e ai criteri del §15. Ogni dev chiude il proprio bloc
 
 1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore in `localStorage`, poi `POST /api/v1/trips/import-draft/` dopo la registrazione). Email di invito (`notifications`). Pagine legali. Export JSON + allegati. Throttling. Admin per staff.
 2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-11 (vista diario di base: fermate fatte, note e percorso sulla mappa; il completo è GDE-08 in Fase 2), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi lato client che chiama l'operazione inversa via API, ogni operazione registrata in `ActivityEntry`; *Decisione proposta*, al posto dell'undo lato server del piano originale), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività).
-3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, §11), MAP-01..04 (vista affiancata su desktop, schede su mobile).
+3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, §11), MAP-01..04 (vista affiancata su desktop, schede su mobile). Lo spostamento lista → giorno è un’unica operazione di `places`/`itinerary`: toglie la `ListEntry`, crea la `DayEntry` e restituisce le tratte ricalcolate. Il reload mostra il luogo nel giorno (TRP-12).
 4. **D, prenotazioni e budget:** RES-01, RES-02, RES-09; RES-03/04 (indirizzo `trip+<token>@`, `InboundEmail`, parser per fornitore in Celery, stato delle importazioni, email non riconosciute salvate come `Attachment` con avviso); BDG-01..05; **BDG-06 anticipato** (richiesto da §14 Fase 1 "budget con conversione" e §15.7; = NEW-02): tasso del giorno della spesa, modificabile, totale nella valuta del viaggio con l'importo originale visibile.
 5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide (§13).
 
@@ -639,7 +646,7 @@ Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; e
 | Notifiche | OFF-03 (invito, commento, stato volo, calo prezzo, promemoria di una tappa con orario), push | A |
 | Viaggio | TRP-07, TRP-08 (stampa e PDF), TRP-13 (trasporto predefinito), TRP-14 (converti in guida, in `guides`) | B (+E per TRP-14) |
 | Collaborazione | COL-05 (commenti) | B |
-| Luoghi | PLC-07 (suggerimenti), PLC-08 (luogo personalizzato) | C |
+| Luoghi | PLC-07 (suggerimenti), PLC-08 (luogo personalizzato). I suggerimenti escludono i luoghi già nel viaggio e si aggiornano all’aggiunta di un luogo; restano P2 | C |
 | Itinerario | ITN-07 (ottimizzazione Pro, **massimo 15 tappe**, inizio e fine fissabili, avviso delle modifiche con **ripristino**; criterio ITN-07), ITN-08 (alloggio come prima e ultima tappa) | C |
 | Mappa | MAP-05 (export verso Google Maps, Pro, aggiornato se il piano cambia), MAP-06 (mappa incorporabile in sola lettura per una guida pubblica) | C |
 | Prenotazioni | RES-06 (allegati con quota gratuita e quota Pro, D11), RES-07 (spostare una prenotazione tra viaggi), RES-08 (stato volo con notifica ai collaboratori, beat) | D |
@@ -812,3 +819,39 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 - Funzioni del §16 delle specifiche: prenotazione diretta di voli e hotel, navigazione turn-by-turn, rete sociale ampia (il `Follow` serve solo alla visibilità `followers`), biglietteria treni, white label.
 - Sviluppo dell'app mobile (D5): il piano prepara solo l'API (Fase 2).
 - Estensione browser: solo in Fase 3 (EXT-01/02).
+- Le voci di `docs/PlaneIT.docx` elencate al §19 come non recepite: carrello e pagamenti di prenotazioni, SIM ed eSIM, biglietti di attrazioni, margine di overbooking, marketplace delle guide con quota, gamification, impatto dei trasporti, filtri di accessibilità del viaggio, fotolibro, stima di costo a ogni tappa, recensioni del sito e bacheca news.
+
+## 19. PlaneIT.docx
+
+`docs/PlaneIT.docx` è un elenco di idee, una bozza di home e una specifica di splash e login. Non entra nei task. Dove coincide con le specifiche, vale l'ID già in questo piano.
+
+| Idea nel docx | Nel piano |
+| --- | --- |
+| Itinerario, date, destinazione, liste e giorni | TRP-01, PLC-01..06, Fase 1A/1B |
+| Voli, treni, hotel come dati del viaggio | RES-01..04, non come prenotazione diretta (§18) |
+| Mezzi di spostamento | ITN-04, TRP-13 |
+| Diario con foto | TRP-11, GDE-08 |
+| Portafoglio condiviso e «chi deve quanto» | BDG-04 |
+| Assistente che propone un itinerario da una frase, modificabile a mano | AI-01..02, Fase 2 |
+| Ordine delle tappe, orari, avviso se il giorno non sta in piedi | ITN-07 e ITN-09 |
+| Meteo che propone un cambiamento | Solo MAP-07 (layer sul giorno, Fase 3). Il messaggio una o due settimane prima e il piano B già pronto non sono un requisito |
+| Voto di gruppo | COL-06, Fase 3 |
+| Offline di mappe, biglietti e itinerario | OFF-01..02, Fase 2 |
+| Account guida che pubblica itinerari | GDE-05, con moderazione (D6). Senza vendita né quota |
+| Cartella di biglietti e prenotazioni | RES-06, Fase 2 |
+| Copiare un itinerario altrui e modificarlo | TRP-04 se il viaggio è leggibile; da una guida, GDE-03 |
+| Copertine e caroselli di mete | Pagine guida in `guides`, non un catalogo «stile Netflix» a parte |
+| Login con email e password, recupero password | ACC-01, ACC-02, allauth, sessione. Non il payload del docx |
+
+Non si recepiscono, finché non sono nelle specifiche:
+
+- nome prodotto PlaneIT, splash con globo 3D e aereo, token in Keychain o EncryptedSharedPreferences già in Fase 0;
+- registrazione con username, nome, cognome, data di nascita (soglia 13 anni), indicatore di forza password, OTP e deep link `planeit://reset-password`;
+- gli endpoint `POST /api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/forgot-password` e i relativi body;
+- numero di persone, fasce d'età, etichette «tipo di viaggio» e «tipo di esperienza» come campi del `Trip`;
+- preferiti, like, amici, recensioni del sito, bacheca news, «Damp» (voce illeggibile nel docx);
+- carrello, pagamenti separati o completi, SIM/eSIM, biglietti di attrazioni, margine per overbooking;
+- piano B meteo automatico, filtri per passeggino, mobilità, intolleranze e orari dei bambini;
+- costo previsto aggiornato a ogni tappa, impatto ambientale dei trasporti, badge e classifica, fotolibro, vendita degli itinerari delle guide.
+
+L'account del web resta quello del §5: email come `USERNAME_FIELD`, nome, niente username né data di nascita.
