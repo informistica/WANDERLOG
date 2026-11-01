@@ -1,9 +1,19 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.6 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.7 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.2](specifiche-funzionali.md) (1 novembre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
 **Data:** 1 novembre 2026
+
+**Changelog 2.7 (1 novembre 2026).** Nessun requisito nuovo. Si chiariscono i proprietari dei requisiti, approvato da Mauro Spinarelli il 1/11/2026, con una regola: **ogni requisito appartiene al workstream che possiede l'app in cui vive il suo codice** (§3).
+
+- COL-06 (= NEW-10) passa a C (`places`). TRP-11 (diario di base) e TRP-14 passano a E (`guides`); B fornisce i servizi e gli eventi di `trips` che servono. TRP-11 di base entra nel blocco 1B di E.
+- MAP-06 condiviso tra C ed E, con i file di ciascuno indicati (§3).
+- Task 0.9: proprietario A, con C per l'isola della mappa e la sua parte della pagina di prova. Fase 1C: `seed_demo` e test e2e a B. Export JSON più allegati: A, in `accounts` (chiude il §21, punto 20). Produzione (§21, punti 52-62): A, con i contributi di tutti.
+- OFF-01/02 a B, API per l'app (D12, CORS) ad A, EXT-01 a C, EXT-02 a E, NEW-09 ad A.
+- Nuovi task preparatori in parallelo alla Fase 1A: 1A.6 (D: fixture `.eml` e test dei parser) e 1A.7 (E: contenuti originali di guide e checklist).
+- §15: nuova colonna "Flusso"; nota di ACC-05 corretta (bozza nella sessione). §16: nomi dei branch confermati (`feat/places`, `feat/reservations`, `feat/guides`). §11: copertura minima 80% su tutte le 14 app.
+- Tolto il residuo `django_vite` dal task 0.3.
 
 **Changelog 2.6 (1 novembre 2026).** Nessun requisito nuovo. D2 è decisa: cambia il frontend della Fase 0 e della Fase 1.
 
@@ -116,15 +126,24 @@ Cosa manca oggi e va sistemato nella Fase 0:
 
 Rispetto al piano originale, `notifications` passa da B ad A e `checklists` da D a E, per alleggerire B (realtime) e D.
 
+**Regola di proprietà (2.7):** ogni requisito appartiene al workstream che possiede l'app in cui vive il suo codice. Se il requisito usa i servizi di un'app più bassa, il proprietario di quell'app li fornisce (`services.py`, segnali, eventi) e li concorda con una issue (§16). La colonna "Flusso" del §15 applica la regola a tutti gli ID.
+
 | Dev | Workstream | App di proprietà | Requisiti principali |
 | --- | --- | --- | --- |
-| **A** | Piattaforma, account, notifiche, abbonamento | `core`, `accounts`, `notifications`, `billing` | Fase 0, ACC-01..07, OFF-03, SUB-01..03, CI, sicurezza |
-| **B** | Viaggi e collaborazione | `trips` (+ realtime, attività, inviti, commenti) | TRP-01..14, COL-01..06 |
-| **C** | Luoghi, mappa, itinerario | `maps`, `places`, `itinerary` | PLC-01..09, MAP-01..07, ITN-01..10 |
-| **D** | Prenotazioni e budget | `reservations`, `budget` | RES-01..10, BDG-01..08 |
-| **E** | Scoperta, checklist, alloggi, assistente | `guides`, `checklists`, `lodging`, `assistant` | GDE-01..09, CHK-01..04, HOT-01..07, AI-01..06 |
+| **A** | Piattaforma, account, notifiche, abbonamento | `core`, `accounts`, `notifications`, `billing` | Fase 0 (task 0.9 con C), ACC-01..07, NEW-01, OFF-03, SUB-01..03, NEW-09, API per l'app (D12, CORS), export JSON più allegati, CI, sicurezza, produzione (§21.10, con i contributi di tutti) |
+| **B** | Viaggi e collaborazione | `trips` (+ realtime, attività, inviti, commenti) | TRP-01..10, TRP-12, TRP-13, NEW-07, NEW-11, COL-01..05, OFF-01, OFF-02; Fase 1C: `seed_demo` e test e2e |
+| **C** | Luoghi, mappa, itinerario | `maps`, `places`, `itinerary` | PLC-01..09, MAP-01..07 (MAP-06 con E), ITN-01..10, NEW-03, NEW-06, NEW-08, COL-06 (= NEW-10), EXT-01 (lato server); isola della mappa del task 0.9 |
+| **D** | Prenotazioni e budget | `reservations`, `budget` | RES-01..10, BDG-01..08, NEW-02, NEW-04, NEW-05; task 1A.6 |
+| **E** | Scoperta, checklist, alloggi, assistente | `guides`, `checklists`, `lodging`, `assistant` | GDE-01..09, CHK-01..04, HOT-01..07, AI-01..06, TRP-11 (diario), TRP-14, MAP-06 con C, EXT-02 (lato server); task 1A.7 |
 
-Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'editor (template e partial nella propria app, `<app>/templates/<app>/`). Le revisioni incrociate sono obbligatorie su `core/` (compresi il layout base `core/templates/` e i file statici comuni `core/static/`) e su `trips/` (dominio condiviso).
+Casi con più app (2.7):
+
+- **TRP-11 e TRP-14 (E).** Il diario (`Journal`, `JournalStop`) e la conversione in guida stanno in `guides`. B fornisce da `trips` i servizi di lettura del viaggio, `record_activity` e gli eventi; la pagina del viaggio di `trips` porta alla vista diario con un link o la carica come partial con `hx-get`, senza importare `guides` (§6).
+- **MAP-06 (C ed E).** C possiede in `maps/` il template incorporabile in sola lettura e lo script dell'isola (`maps/static/maps/`), che ricevono i dati e non conoscono le guide. E possiede in `guides/` la view, l'URL e il controllo che la guida sia pubblica, e passa i dati al template di `maps`.
+- **Task 0.9 (A con C).** A possiede `core/templates/base.html`, i file statici di HTMX in `core/static/` e `core/tests/test_frontend.py`; C possiede l'isola in `maps/static/maps/` e, nella pagina di prova, il contenitore della mappa.
+- **OFF-01, OFF-02 (B), EXT-01 (C), EXT-02 (E).** Il piano copre la parte server, cioè l'API: l'app mobile (D5) e l'estensione browser sono progetti separati (§18). OFF-01/02 riguardano il viaggio completo e i conflitti come COL-03 (`trips`); EXT-01 salva un luogo (`places`); EXT-02 riguarda gli alloggi (`lodging`).
+
+Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'editor (template e partial nella propria app, `<app>/templates/<app>/`). Le revisioni incrociate sono obbligatorie su `core/` (compresi il layout base `core/templates/` e i file statici comuni `core/static/`) e su `trips/` (dominio condiviso). Branch: `feat/accounts` (A), `feat/trips` (B), `feat/places` (C), `feat/reservations` (D), `feat/guides` (E) (§16).
 
 ---
 
@@ -239,6 +258,7 @@ Regole (sostituiscono la regola "nessuna app importa modelli di un'altra" del pi
   - ACC-04: `accounts` emette `user_deleting`, `trips` gestisce il trasferimento o l'eliminazione dei viaggi;
   - BDG-07: `reservations` emette `reservation_priced`, `budget` crea la spesa proposta;
   - TRP-14: la conversione del viaggio in guida sta in `guides`.
+  - Export (§12, dalla 2.7): `accounts` definisce il segnale di raccolta dei dati dell'utente, ogni app con dati dell'utente vi risponde con un ricevitore.
 - **Controllo automatico** *(Decisione proposta)*: `import-linter` con un contratto `layers` in `WANDERLOG/.importlinter`, eseguito in CI.
 
 ---
@@ -493,7 +513,7 @@ Ogni adapter esterno (`maps`, cambi, voli, meteo, LLM, push, pagamenti) ha un'im
 | Accessibilità | axe-core iniettato nei test Playwright *(Decisione proposta)* | `e2e/test_a11y.py` | PR verso `main` |
 | Prestazioni | viaggio di prova con 200 luoghi: risposta dell'API e apertura dell'editor sotto i 3 s (§12) | `e2e/test_performance.py` | Ogni notte |
 
-Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTINGS_MODULE = WANDERLOG.settings`. Copertura minima *(Decisione proposta)*: 80% su `trips`, `places`, `itinerary`, `reservations`, `budget`.
+Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTINGS_MODULE = WANDERLOG.settings`. Copertura minima *(Decisione proposta)*: 80% su ciascuna delle 14 app del progetto (dalla 2.7 anche `core`, `accounts`, `notifications`, `billing`, `maps`, `guides`, `checklists`, `lodging`, `assistant`, per coerenza: lo stesso criterio per ogni workstream). La suite `e2e/` è di B (Fase 1C); ogni workstream fornisce i dati e la revisione per i criteri del proprio blocco.
 
 **Test di accettazione obbligatori** (un file per criterio):
 
@@ -530,7 +550,7 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 | Pagamenti | Firma dei webhook Stripe verificata, stato dell'abbonamento solo dai webhook, limiti lato server (SUB-03) | 2 |
 | LLM | Si invia al modello solo la parte di piano necessaria. L'utente è informato e ogni risposta ha l'avviso di inaccuratezza (§11, AI-05) | 2 |
 | Cancellazione dell'account (ACC-04) | Viaggi di cui si è unici proprietari: trasferiti o eliminati. Viaggi condivisi: restano agli altri collaboratori | 1 |
-| Export (§12 Disponibilità) | Archivio scaricabile (JSON più allegati) generato da un task Celery e inviato via link firmato | 1 |
+| Export (§12 Disponibilità) | Archivio scaricabile (JSON più allegati) generato da un task Celery in `accounts` (A, dalla 2.7) e inviato via link firmato | 1 |
 | Pagine legali (§9) | Termini, privacy, cookie, in `core`. La privacy policy documenta l'analisi della posta (§13) | 1 |
 | Licenze dei contenuti (§13) | Recensioni e foto mostrate solo se la licenza del provider (D1) lo permette, con attribuzione. Nessuno scraping di Wanderlog. Fixture con contenuti originali | 1 |
 | Admin | Django admin solo per staff e admin, con 2FA *(Decisione proposta, allauth MFA)*. Il login dell'admin non passa da allauth (niente rate limit né 2FA): la documentazione di allauth indica `admin.site.login = secure_admin_login(admin.site.login)` in `urls.py` | 1 |
@@ -618,7 +638,7 @@ Accessibilità (§12, NEW-12):
 - Se il volume `postgres_data` contiene già tabelle create da un `migrate` precedente, azzerarlo con `docker compose down -v`. **Attenzione: cancella i dati del database di sviluppo.**
 - `core/models.py`: `BaseModel` astratto (UUID, timestamp).
 - `accounts/models.py`: `User(AbstractUser)` con `id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)` (§5), `username = None`, `email` unica come `USERNAME_FIELD`, `REQUIRED_FIELDS = []`, manager personalizzato e i campi del §5. In `settings.py`: `AUTH_USER_MODEL = "accounts.User"`.
-- Aggiungere a `INSTALLED_APPS`, nell'ordine: `daphne` (in testa), app Django, `rest_framework`, `drf_spectacular`, `channels`, `allauth`, `allauth.account`, `allauth.socialaccount`, `allauth.socialaccount.providers.google`, poi `core`, `accounts`, `notifications`, `billing`, `maps`, `trips`, `places`, `itinerary`, `reservations`, `budget`, `checklists`, `guides`, `lodging`, `assistant` (e `django_vite` con [SPA]).
+- Aggiungere a `INSTALLED_APPS`, nell'ordine: `daphne` (in testa), app Django, `rest_framework`, `drf_spectacular`, `channels`, `allauth`, `allauth.account`, `allauth.socialaccount`, `allauth.socialaccount.providers.google`, poi `core`, `accounts`, `notifications`, `billing`, `maps`, `trips`, `places`, `itinerary`, `reservations`, `budget`, `checklists`, `guides`, `lodging`, `assistant`.
 - `daphne` sostituisce `runserver` e richiede `ASGI_APPLICATION = "WANDERLOG.asgi.application"`; l'`asgi.py` attuale basta fino al task 0.6.
 - django-allauth, secondo la documentazione ufficiale (quickstart e "custom user models"):
   ```python
@@ -674,7 +694,7 @@ Accessibilità (§12, NEW-12):
 - `.github/workflows/ci.yml` con i servizi `postgres:17` e `redis:7`. Passi: `ruff check`, `ruff format --check`, `lint-imports`, `manage.py check`, `makemigrations --check --dry-run`, `compilemessages`, `pytest --cov`, confronto dello schema OpenAPI.
 - Checkpoint: `docker compose exec django sh -c "ruff check .. && lint-imports && pytest -q"` esce con 0. La CI è verde sul branch.
 
-**0.9 Frontend: layout base, HTMX e isola della mappa** (D2 decisa: template Django + HTMX)
+**0.9 Frontend: layout base, HTMX e isola della mappa** (D2 decisa: template Django + HTMX; proprietario A, con C per l'isola della mappa, §3)
 - `core/templates/base.html`: layout, selettore di lingua, `hx-headers` con il token CSRF, una regione `aria-live` per gli annunci. File statici versionati di HTMX 2 e dell'estensione `ws` in `core/static/`.
 - Pagina di prova `/trips/demo/edit` con layout a due colonne (sezioni | mappa): la colonna delle sezioni carica un partial di prova con `hx-get`; il contenitore della mappa e lo script dell'isola (`maps/static/maps/`, con provider `mock`) compaiono solo in questa pagina.
 - Checkpoint: `curl -fsS http://localhost:8000/it/trips/demo/edit` risponde 200 e la pagina contiene lo script di HTMX e il contenitore della mappa. Test `core/tests/test_frontend.py` verde: il partial di prova restituisce solo il frammento quando la richiesta ha l'header `HX-Request: true`, la pagina intera altrimenti.
@@ -685,21 +705,23 @@ Accessibilità (§12, NEW-12):
 
 ### Fase 1A — Dominio comune (sequenziale, prima del lavoro in parallelo)
 
-Questa fase evita che `places`, `itinerary`, `reservations`, `budget` e `checklists` partano senza i modelli di `trips`.
+Questa fase evita che `places`, `itinerary`, `reservations`, `budget` e `checklists` partano senza i modelli di `trips`. I task 1A.1–1A.5 sono sequenziali; i task preparatori 1A.6 (D) e 1A.7 (E) non toccano modelli e procedono in parallelo, a partire dalla chiusura del task 0.8.
 
 **1A.1 `trips` (Dev B):** `Trip`, `TripDestination`, `Day`, `Section`, `Membership`, `Invite`, `ActivityEntry`, `NoteRevision`. Servizi `create_trip` (sezioni di sistema e giorni generati dalle date), `record_activity`. Policy `trips/policies.py` e test della matrice §7.
 **1A.2 `maps` (Dev C):** interfacce `PlaceProvider`, `RouteProvider`, `Geocoder`, `MockProvider` deterministico, selezione con `MAPS_PROVIDER`. Generatori di deep link per Google Maps e Apple Maps (ITN-05).
 **1A.3 `places` (Dev C), dopo D1:** `Place` (campi salvati secondo la licenza D1, con `fetched_at`), `PlaceItem`, `ListEntry`.
 **1A.4 `itinerary` (Dev C):** `DayEntry`, `Leg`. Servizio `recompute_legs(day)` invocato dalla richiesta che sposta o riordina le tappe: la risposta include durata, distanza e geometria (ITN-01, ITN-03). Celery serve al ritento se il provider non risponde, non è l’unico percorso. Senza stima, `estimate_available = False` (§11).
 **1A.5 Realtime (Dev B):** consumer `ws/trips/<uuid>/`, gruppo `trip_<uuid>`, broadcast `on_commit` dai servizi.
+**1A.6 Preparazione di `reservations` (Dev D, in parallelo):** fixture `.eml` di esempio scritte dal team (niente email reali) in `reservations/tests/fixtures/emails/`, almeno una per ogni fornitore che il team vuole riconoscere più una non riconoscibile; parser per fornitore come funzioni pure (contenuto dell'email → dati strutturati), senza modelli, con i loro test. In 1B i parser si collegano a `InboundEmail` e `Reservation` (*Decisione proposta*).
+**1A.7 Preparazione dei contenuti di `guides` e `checklists` (Dev E, in parallelo):** testi originali (§13) di destinazioni, di almeno una guida con 2 giorni e dei modelli di checklist città, mare, montagna, bambino (CHK-02), in `it` ed `en`, in file di dati versionati nelle due app; diventano fixture appena esistono i modelli (1B). Contenuti approvati in review (chi li approva per la produzione è il §21, punto 62).
 
 Checkpoint della Fase 1A:
 ```bash
 docker compose exec django python manage.py makemigrations --check --dry-run
-docker compose exec django pytest -q trips places itinerary maps
+docker compose exec django pytest -q trips places itinerary maps reservations
 docker compose exec django lint-imports
 ```
-Criteri: `create_trip(title="Roma", start=12/06, end=16/06)` crea 5 `Day`, le sezioni di sistema e una lista "Senza titolo" (test). La matrice §7 è tutta verde. Un client WebSocket con ruolo `viewer` riceve gli eventi ma ottiene un rifiuto se prova a scrivere.
+Criteri: `create_trip(title="Roma", start=12/06, end=16/06)` crea 5 `Day`, le sezioni di sistema e una lista "Senza titolo" (test). La matrice §7 è tutta verde. Un client WebSocket con ruolo `viewer` riceve gli eventi ma ottiene un rifiuto se prova a scrivere. I test dei parser di 1A.6 sono verdi sulle fixture; i file di 1A.7 sono presenti in `it` ed `en` e approvati in review.
 
 ---
 
@@ -707,17 +729,18 @@ Criteri: `create_trip(title="Roma", start=12/06, end=16/06)` crea 5 `Day`, le se
 
 Corrisponde a §14 Fase 1 e ai criteri del §15. Ogni dev chiude il proprio blocco con test e checkpoint.
 
-1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore nella sessione Django, lato server, salvata sull'account dopo la registrazione; *Decisione proposta* adattata a D2, prima era in `localStorage`; l'endpoint `POST /api/v1/trips/import-draft/` resta per l'app della Fase 2). Email di invito (`notifications`). Pagine legali. Export JSON + allegati. Throttling. Admin per staff.
-2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-11 (vista diario di base: fermate fatte, note e percorso sulla mappa; il completo è GDE-08 in Fase 2), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi per utente e viaggio tenuta sul server, che esegue l'operazione inversa tramite i servizi, ogni operazione registrata in `ActivityEntry`; *Decisione proposta* adattata a D2, che non prevede JavaScript nell'editor oltre alla mappa), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività).
+1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore nella sessione Django, lato server, salvata sull'account dopo la registrazione; *Decisione proposta* adattata a D2, prima era in `localStorage`; l'endpoint `POST /api/v1/trips/import-draft/` resta per l'app della Fase 2). Email di invito (`notifications`). Pagine legali. Export JSON + allegati in `accounts` (§21, punto 20: `accounts` definisce un segnale di raccolta dei dati, ogni app con dati dell'utente vi contribuisce con un ricevitore, nel rispetto del §6). Throttling. Admin per staff.
+2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi per utente e viaggio tenuta sul server, che esegue l'operazione inversa tramite i servizi, ogni operazione registrata in `ActivityEntry`; *Decisione proposta* adattata a D2, che non prevede JavaScript nell'editor oltre alla mappa), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività). Servizi di lettura del viaggio ed eventi per TRP-11 di E.
 3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, §11), MAP-01..04 (vista affiancata su desktop, schede su mobile). Lo spostamento lista → giorno è un’unica operazione di `places`/`itinerary`: toglie la `ListEntry`, crea la `DayEntry` e restituisce le tratte ricalcolate. Il reload mostra il luogo nel giorno (TRP-12).
 4. **D, prenotazioni e budget:** RES-01, RES-02, RES-09; RES-03/04 (indirizzo `trip+<token>@`, `InboundEmail`, parser per fornitore in Celery, stato delle importazioni, email non riconosciute salvate come `Attachment` con avviso); BDG-01..05; **BDG-06 anticipato** (richiesto da §14 Fase 1 "budget con conversione" e §15.7; = NEW-02): tasso del giorno della spesa, modificabile, totale nella valuta del viaggio con l'importo originale visibile.
-5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide (§13).
+5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide (§13) dai contenuti di 1A.7, TRP-11 (diario di base in `guides`: `Journal` e `JournalStop` con fermate fatte, note e percorso sulla mappa, raggiungibile dalla pagina del viaggio; il completo è GDE-08 in Fase 2).
 
 Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; endpoint presenti nello schema OpenAPI; test dei permessi per ogni nuovo endpoint; stringhe tradotte in `it` ed `en`.
 
 ### Fase 1C — Integrazione e accettazione del primo rilascio
 
-- Seed: `python manage.py seed_demo` (destinazione, guida con 2 giorni, luoghi mock, modelli di checklist).
+- Seed (B): `python manage.py seed_demo` (destinazione, guida con 2 giorni, luoghi mock, modelli di checklist). Il comando sta in `trips` e carica con `loaddata` le fixture fornite dalle altre app (E: destinazioni, guide, modelli di checklist; C: luoghi mock), senza importarne il codice (§6) *(Decisione proposta)*.
+- Test e2e (B): B possiede `e2e/` e porta a verde i 9 test `e2e/test_acc15_*`, `e2e/test_a11y.py` e `e2e/test_performance.py`; ogni workstream rivede i test dei criteri del proprio blocco.
 - Checkpoint (criterio della fase = §15):
   ```bash
   docker compose exec django python manage.py seed_demo
@@ -737,24 +760,25 @@ Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; e
 | Caselle collegate | ACC-06, RES-05 (Gmail, opt-in, log delle letture) | A + D |
 | Profilo pubblico | ACC-07 | A |
 | Notifiche | OFF-03 (invito, commento, stato volo, calo prezzo, promemoria di una tappa con orario), push | A |
-| Viaggio | TRP-07, TRP-08 (stampa e PDF), TRP-13 (trasporto predefinito), TRP-14 (converti in guida, in `guides`) | B (+E per TRP-14) |
+| Viaggio | TRP-07, TRP-08 (stampa e PDF), TRP-13 (trasporto predefinito) | B |
 | Collaborazione | COL-05 (commenti) | B |
 | Luoghi | PLC-07 (suggerimenti), PLC-08 (luogo personalizzato). I suggerimenti escludono i luoghi già nel viaggio e si aggiornano all’aggiunta di un luogo; restano P2 | C |
 | Itinerario | ITN-07 (ottimizzazione Pro, **massimo 15 tappe**, inizio e fine fissabili, avviso delle modifiche con **ripristino**; criterio ITN-07), ITN-08 (alloggio come prima e ultima tappa) | C |
-| Mappa | MAP-05 (export verso Google Maps, Pro, aggiornato se il piano cambia), MAP-06 (mappa incorporabile in sola lettura per una guida pubblica) | C |
+| Mappa | MAP-05 (export verso Google Maps, Pro, aggiornato se il piano cambia), MAP-06 (mappa incorporabile in sola lettura per una guida pubblica: template e isola in `maps`, pagina in `guides`, §3) | C (+E per MAP-06) |
 | Prenotazioni | RES-06 (allegati con quota gratuita e quota Pro, D11), RES-07 (spostare una prenotazione tra viaggi), RES-08 (stato volo con notifica ai collaboratori, beat) | D |
 | Budget | BDG-07 (spesa proposta dalle prenotazioni con prezzo, da confermare; parte di NEW-05) | D |
 | Checklist | CHK-03 (assegnatario), CHK-04 (lista proposta dall'assistente) | E |
-| Guide | GDE-05 (pubblicazione utente con moderazione, D6), GDE-06 (Q&A moderate), GDE-07 (medie climatiche, D10), GDE-08 (diario completo, privacy indipendente) | E |
+| Guide | GDE-05 (pubblicazione utente con moderazione, D6), GDE-06 (Q&A moderate), GDE-07 (medie climatiche, D10), GDE-08 (diario completo, privacy indipendente), TRP-14 (converti in guida, con i servizi di lettura di `trips`) | E |
 | Alloggi | HOT-01..06 (più fornitori, ordinamento dichiarato, tasse incluse o segnalate, salvataggio come candidato o prenotazione, avviso di calo prezzo, clic tracciati; D8) | E |
 | Assistente | AI-01..05 (chat sul viaggio, suggerimenti aggiunti solo con azione esplicita, bozza di giorni da confermare, traduzione, quota gratuita `AI_FREE_MESSAGE_QUOTA` e Pro senza limite, avviso di inaccuratezza, allegato, nuova chat) | E |
-| App e offline | API pronta per l'app (D12, CORS), OFF-01, OFF-02 (coda offline, conflitti come COL-03). L'app (D5) è un progetto separato | A + B |
+| API per l'app | Autenticazione dell'app (D12) e CORS. L'app (D5) è un progetto separato | A |
+| Offline | OFF-01 (viaggio completo scaricabile dall'API), OFF-02 (coda offline, conflitti come COL-03) | B |
 
 Checkpoint della Fase 2: test di ogni requisito verde; `e2e/test_itn07_ottimizzazione.py` verde; test SUB-03 (chiamata API a una funzione Pro con utente free → 403, anche con l'interfaccia aggirata); suite e2e della Fase 1 ancora verde.
 
 ### Fase 3 — Estensioni (P3, §14 Fase 3)
 
-TRP-10 / NEW-07 (calendario), PLC-09 / NEW-08 (attività senza luogo), ITN-09 (ottimizzazione con orari fissati e finestre di apertura), ITN-10 (treno, traghetto, taxi, volo interno), MAP-07 / NEW-06 (meteo sul giorno), RES-10 (pacchetto conteggiato una volta: completa NEW-05), NEW-04 (campi treno, bus e traghetto), BDG-08 (CSV), COL-06 / NEW-10 (voto di gruppo), GDE-09 (guide offline nell'app), HOT-07 (voli e noleggi), AI-06 (profilo del gruppo), EXT-01, EXT-02 (estensione browser), NEW-09 (Pro mensile), "racconti" (D13).
+TRP-10 / NEW-07 (calendario, B), PLC-09 / NEW-08 (attività senza luogo, C), ITN-09 (ottimizzazione con orari fissati e finestre di apertura, C), ITN-10 (treno, traghetto, taxi, volo interno, C), MAP-07 / NEW-06 (meteo sul giorno, C), RES-10 (pacchetto conteggiato una volta: completa NEW-05, D), NEW-04 (campi treno, bus e traghetto, D), BDG-08 (CSV, D), COL-06 / NEW-10 (voto di gruppo, C), GDE-09 (guide offline nell'app, E), HOT-07 (voli e noleggi, E), AI-06 (profilo del gruppo, E), EXT-01 (API per salvare un luogo, C), EXT-02 (dati degli alloggi, E) per l'estensione browser, NEW-09 (Pro mensile, A), "racconti" (D13, E).
 
 Checkpoint della Fase 3: test di ogni requisito verde; regressione e2e delle Fasi 1 e 2 verde.
 
@@ -764,125 +788,125 @@ Checkpoint della Fase 3: test di ogni requisito verde; regressione e2e delle Fas
 
 Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differisce dalla priorità, la nota spiega perché.
 
-| ID | Prior. | Fase | App | Note |
-| --- | --- | --- | --- | --- |
-| ACC-01 | P1 | 1B | accounts | allauth, Google |
-| ACC-02 | P1 | 1B | accounts | |
-| ACC-03 | P1 | 1B | accounts | Comprende km/miglia (NEW-01) |
-| ACC-04 | P1 | 1B | accounts, trips | Segnale `user_deleting` |
-| ACC-05 | P1 | 1B | accounts, trips | Bozza locale → import |
-| ACC-06 | P2 | 2 | accounts | Con RES-05 |
-| ACC-07 | P2 | 2 | accounts | Usa `Follow` |
-| TRP-01 | P1 | 1A/1B | trips | Criterio TRP-01, test §15.1 |
-| TRP-02 | P1 | 1B | trips | Conferma prima di eliminare giorni |
-| TRP-03 | P1 | 1B | trips | |
-| TRP-04 | P1 | 1B | trips | Eliminazione solo del proprietario |
-| TRP-05 | P1 | 1B | trips | 4 livelli del §6 |
-| TRP-06 | P1 | 1B | trips, maps | Copertina dal provider, sostituibile |
-| TRP-07 | P2 | 2 | trips | |
-| TRP-08 | P2 | 2 | trips | |
-| TRP-09 | P2 | 1B | trips | Anticipato (*Decisione proposta*); = NEW-11 |
-| TRP-10 | P3 | 3 | trips | = NEW-07 |
-| TRP-11 | P1 | 1B | trips, guides | Diario di base in 1, completo con GDE-08 in 2 |
-| TRP-12 | P1 | 1B | trips + editor | |
-| TRP-13 | P2 | 2 | trips, itinerary | |
-| TRP-14 | P2 | 2 | guides | |
-| PLC-01 | P1 | 1B | places, maps | |
-| PLC-02 | P1 | 1B | places, maps | Campi limitati dalla licenza D1 |
-| PLC-03 | P1 | 1B | places, trips | |
-| PLC-04 | P1 | 1B | places | |
-| PLC-05 | P1 | 1B | places | Riordino accessibile (NEW-12) |
-| PLC-06 | P1 | 1B | places, itinerary | |
-| PLC-07 | P2 | 2 | places, maps | |
-| PLC-08 | P2 | 2 | places | |
-| PLC-09 | P3 | 3 | itinerary | = NEW-08 |
-| ITN-01 | P1 | 1B | itinerary | |
-| ITN-02 | P1 | 1B | itinerary | |
-| ITN-03 | P1 | 1B | itinerary, maps | |
-| ITN-04 | P1 | 1B | itinerary | Bici inclusa (NEW-03) |
-| ITN-05 | P1 | 1B | maps | Deep link |
-| ITN-06 | P1 | 1B | editor | |
-| ITN-07 | P2 | 2 | itinerary, billing | Pro, massimo 15 tappe, ripristino |
-| ITN-08 | P2 | 2 | itinerary | |
-| ITN-09 | P3 | 3 | itinerary | |
-| ITN-10 | P3 | 3 | itinerary | |
-| MAP-01 | P1 | 1B | editor | |
-| MAP-02 | P1 | 1B | editor | |
-| MAP-03 | P1 | 1B | editor | Test §15.4 |
-| MAP-04 | P1 | 1B | editor, itinerary | |
-| MAP-05 | P2 | 2 | maps | Pro |
-| MAP-06 | P2 | 2 | guides, maps | Termini del provider (D1) |
-| MAP-07 | P3 | 3 | maps | Con NEW-06 |
-| RES-01 | P1 | 1B | reservations | |
-| RES-02 | P1 | 1B | reservations | |
-| RES-03 | P1 | 1B | reservations | Criterio RES-03 (meno di 1 minuto) |
-| RES-04 | P1 | 1B | reservations | |
-| RES-05 | P2 | 2 | reservations, accounts | Pro |
-| RES-06 | P2 | 2 | reservations, billing | Quote |
-| RES-07 | P2 | 2 | reservations | |
-| RES-08 | P2 | 2 | reservations, notifications | Pro |
-| RES-09 | P1 | 1B | reservations | |
-| RES-10 | P3 | 3 | reservations, budget | Campo `excluded_from_budget` già presente dalla 1B |
-| BDG-01 | P1 | 1B | budget | |
-| BDG-02 | P1 | 1B | budget | |
-| BDG-03 | P1 | 1B | budget | |
-| BDG-04 | P1 | 1B | budget | Saldo di gruppo |
-| BDG-05 | P1 | 1B | budget | |
-| BDG-06 | P2 | **1B** | budget | Anticipato: §14 Fase 1 e §15.7; = NEW-02 |
-| BDG-07 | P2 | 2 | budget | Parte di NEW-05 |
-| BDG-08 | P3 | 3 | budget | |
-| CHK-01 | P1 | 1B | checklists | |
-| CHK-02 | P1 | 1B | checklists | |
-| CHK-03 | P2 | 2 | checklists | |
-| CHK-04 | P2 | 2 | checklists, assistant | |
-| COL-01 | P1 | 1B | trips, notifications | |
-| COL-02 | P1 | 1A/1B | trips | Channels, sincronizzazione entro 5 s |
-| COL-03 | P1 | 1B | trips | `NoteRevision` |
-| COL-04 | P1 | 1A/1B | trips | |
-| COL-05 | P2 | 2 | trips | |
-| COL-06 | P3 | 3 | places | = NEW-10 |
-| GDE-01 | P1 | 1B | guides | |
-| GDE-02 | P1 | 1B | guides, places | Recensioni solo se la licenza lo permette (§13) |
-| GDE-03 | P1 | 1B | guides | Criterio GDE-03 |
-| GDE-04 | P1 | 1B | guides | |
-| GDE-05 | P2 | 2 | guides | D6 |
-| GDE-06 | P2 | 2 | guides | |
-| GDE-07 | P2 | 2 | guides | D10 |
-| GDE-08 | P2 | 2 | guides | |
-| GDE-09 | P3 | 3 | guides | Richiede l'app |
-| HOT-01 | P2 | 2 | lodging | |
-| HOT-02 | P2 | 2 | lodging | |
-| HOT-03 | P2 | 2 | lodging | |
-| HOT-04 | P2 | 2 | lodging, reservations | |
-| HOT-05 | P2 | 2 | lodging, notifications | |
-| HOT-06 | P2 | 2 | lodging | Affiliati: D8 |
-| HOT-07 | P3 | 3 | lodging | |
-| AI-01 | P2 | 2 | assistant | |
-| AI-02 | P2 | 2 | assistant | |
-| AI-03 | P2 | 2 | assistant | |
-| AI-04 | P2 | 2 | assistant | |
-| AI-05 | P2 | 2 | assistant, billing | |
-| AI-06 | P3 | 3 | assistant | |
-| OFF-01 | P2 | 2 | API e app | |
-| OFF-02 | P2 | 2 | API e app | |
-| OFF-03 | P2 | 2 | notifications | Email di invito già in 1B (COL-01) |
-| EXT-01 | P3 | 3 | estensione + API | |
-| EXT-02 | P3 | 3 | estensione | |
-| SUB-01 | P2 | 2 | billing | D7 |
-| SUB-02 | P2 | 2 | billing | |
-| SUB-03 | P2 | 2 | billing | |
-| NEW-01 | — | 1B | accounts | Con ACC-03 e i18n |
-| NEW-02 | — | 1B | budget | = BDG-06 |
-| NEW-03 | — | 1B | itinerary | = ITN-04 |
-| NEW-04 | — | 3 | reservations | §14 Fase 3 "treni e traghetti strutturati" |
-| NEW-05 | — | 2 + 3 | budget, reservations | BDG-07 in 2, RES-10 in 3 |
-| NEW-06 | — | 3 | maps | |
-| NEW-07 | — | 3 | trips | = TRP-10 |
-| NEW-08 | — | 3 | itinerary | = PLC-09 |
-| NEW-09 | — | 3 | billing | |
-| NEW-10 | — | 3 | places | = COL-06 |
-| NEW-11 | — | 1B | trips | = TRP-09 |
-| NEW-12 | — | **1** | editor, tutte | Accessibilità (§12) |
+| ID | Prior. | Fase | App | Flusso | Note |
+| --- | --- | --- | --- | --- | --- |
+| ACC-01 | P1 | 1B | accounts | A | allauth, Google |
+| ACC-02 | P1 | 1B | accounts | A | |
+| ACC-03 | P1 | 1B | accounts | A | Comprende km/miglia (NEW-01) |
+| ACC-04 | P1 | 1B | accounts, trips | A | Segnale `user_deleting` |
+| ACC-05 | P1 | 1B | accounts, trips | A | Bozza del visitatore nella sessione Django, poi sull'account (D2); `import-draft` resta per l'app |
+| ACC-06 | P2 | 2 | accounts | A | Con RES-05 |
+| ACC-07 | P2 | 2 | accounts | A | Usa `Follow` |
+| TRP-01 | P1 | 1A/1B | trips | B | Criterio TRP-01, test §15.1 |
+| TRP-02 | P1 | 1B | trips | B | Conferma prima di eliminare giorni |
+| TRP-03 | P1 | 1B | trips | B | |
+| TRP-04 | P1 | 1B | trips | B | Eliminazione solo del proprietario |
+| TRP-05 | P1 | 1B | trips | B | 4 livelli del §6 |
+| TRP-06 | P1 | 1B | trips, maps | B | Copertina dal provider, sostituibile |
+| TRP-07 | P2 | 2 | trips | B | |
+| TRP-08 | P2 | 2 | trips | B | |
+| TRP-09 | P2 | 1B | trips | B | Anticipato (*Decisione proposta*); = NEW-11 |
+| TRP-10 | P3 | 3 | trips | B | = NEW-07 |
+| TRP-11 | P1 | 1B | guides, trips | E | Diario di base in 1 (`guides`, con i servizi di `trips`), completo con GDE-08 in 2 |
+| TRP-12 | P1 | 1B | trips + editor | B | |
+| TRP-13 | P2 | 2 | trips, itinerary | B | |
+| TRP-14 | P2 | 2 | guides | E | Con i servizi di lettura di `trips` |
+| PLC-01 | P1 | 1B | places, maps | C | |
+| PLC-02 | P1 | 1B | places, maps | C | Campi limitati dalla licenza D1 |
+| PLC-03 | P1 | 1B | places, trips | C | |
+| PLC-04 | P1 | 1B | places | C | |
+| PLC-05 | P1 | 1B | places | C | Riordino accessibile (NEW-12) |
+| PLC-06 | P1 | 1B | places, itinerary | C | |
+| PLC-07 | P2 | 2 | places, maps | C | |
+| PLC-08 | P2 | 2 | places | C | |
+| PLC-09 | P3 | 3 | itinerary | C | = NEW-08 |
+| ITN-01 | P1 | 1B | itinerary | C | |
+| ITN-02 | P1 | 1B | itinerary | C | |
+| ITN-03 | P1 | 1B | itinerary, maps | C | |
+| ITN-04 | P1 | 1B | itinerary | C | Bici inclusa (NEW-03) |
+| ITN-05 | P1 | 1B | maps | C | Deep link |
+| ITN-06 | P1 | 1B | editor | C | |
+| ITN-07 | P2 | 2 | itinerary, billing | C | Pro, massimo 15 tappe, ripristino |
+| ITN-08 | P2 | 2 | itinerary | C | |
+| ITN-09 | P3 | 3 | itinerary | C | |
+| ITN-10 | P3 | 3 | itinerary | C | |
+| MAP-01 | P1 | 1B | editor | C | |
+| MAP-02 | P1 | 1B | editor | C | |
+| MAP-03 | P1 | 1B | editor | C | Test §15.4 |
+| MAP-04 | P1 | 1B | editor, itinerary | C | |
+| MAP-05 | P2 | 2 | maps | C | Pro |
+| MAP-06 | P2 | 2 | guides, maps | C + E | C: template e isola in `maps`; E: pagina in `guides` (§3). Termini del provider (D1) |
+| MAP-07 | P3 | 3 | maps | C | Con NEW-06 |
+| RES-01 | P1 | 1B | reservations | D | |
+| RES-02 | P1 | 1B | reservations | D | |
+| RES-03 | P1 | 1B | reservations | D | Criterio RES-03 (meno di 1 minuto) |
+| RES-04 | P1 | 1B | reservations | D | |
+| RES-05 | P2 | 2 | reservations, accounts | D | Pro |
+| RES-06 | P2 | 2 | reservations, billing | D | Quote |
+| RES-07 | P2 | 2 | reservations | D | |
+| RES-08 | P2 | 2 | reservations, notifications | D | Pro |
+| RES-09 | P1 | 1B | reservations | D | |
+| RES-10 | P3 | 3 | reservations, budget | D | Campo `excluded_from_budget` già presente dalla 1B |
+| BDG-01 | P1 | 1B | budget | D | |
+| BDG-02 | P1 | 1B | budget | D | |
+| BDG-03 | P1 | 1B | budget | D | |
+| BDG-04 | P1 | 1B | budget | D | Saldo di gruppo |
+| BDG-05 | P1 | 1B | budget | D | |
+| BDG-06 | P2 | **1B** | budget | D | Anticipato: §14 Fase 1 e §15.7; = NEW-02 |
+| BDG-07 | P2 | 2 | budget | D | Parte di NEW-05 |
+| BDG-08 | P3 | 3 | budget | D | |
+| CHK-01 | P1 | 1B | checklists | E | |
+| CHK-02 | P1 | 1B | checklists | E | |
+| CHK-03 | P2 | 2 | checklists | E | |
+| CHK-04 | P2 | 2 | checklists, assistant | E | |
+| COL-01 | P1 | 1B | trips, notifications | B | |
+| COL-02 | P1 | 1A/1B | trips | B | Channels, sincronizzazione entro 5 s |
+| COL-03 | P1 | 1B | trips | B | `NoteRevision` |
+| COL-04 | P1 | 1A/1B | trips | B | |
+| COL-05 | P2 | 2 | trips | B | |
+| COL-06 | P3 | 3 | places | C | = NEW-10 |
+| GDE-01 | P1 | 1B | guides | E | |
+| GDE-02 | P1 | 1B | guides, places | E | Recensioni solo se la licenza lo permette (§13) |
+| GDE-03 | P1 | 1B | guides | E | Criterio GDE-03 |
+| GDE-04 | P1 | 1B | guides | E | |
+| GDE-05 | P2 | 2 | guides | E | D6 |
+| GDE-06 | P2 | 2 | guides | E | |
+| GDE-07 | P2 | 2 | guides | E | D10 |
+| GDE-08 | P2 | 2 | guides | E | |
+| GDE-09 | P3 | 3 | guides | E | Richiede l'app |
+| HOT-01 | P2 | 2 | lodging | E | |
+| HOT-02 | P2 | 2 | lodging | E | |
+| HOT-03 | P2 | 2 | lodging | E | |
+| HOT-04 | P2 | 2 | lodging, reservations | E | |
+| HOT-05 | P2 | 2 | lodging, notifications | E | |
+| HOT-06 | P2 | 2 | lodging | E | Affiliati: D8 |
+| HOT-07 | P3 | 3 | lodging | E | |
+| AI-01 | P2 | 2 | assistant | E | |
+| AI-02 | P2 | 2 | assistant | E | |
+| AI-03 | P2 | 2 | assistant | E | |
+| AI-04 | P2 | 2 | assistant | E | |
+| AI-05 | P2 | 2 | assistant, billing | E | |
+| AI-06 | P3 | 3 | assistant | E | |
+| OFF-01 | P2 | 2 | trips (API); app separata | B | |
+| OFF-02 | P2 | 2 | trips (API); app separata | B | Conflitti come COL-03 |
+| OFF-03 | P2 | 2 | notifications | A | Email di invito già in 1B (COL-01) |
+| EXT-01 | P3 | 3 | places (API); estensione separata | C | |
+| EXT-02 | P3 | 3 | lodging (API); estensione separata | E | |
+| SUB-01 | P2 | 2 | billing | A | D7 |
+| SUB-02 | P2 | 2 | billing | A | |
+| SUB-03 | P2 | 2 | billing | A | |
+| NEW-01 | — | 1B | accounts | A | Con ACC-03 e i18n |
+| NEW-02 | — | 1B | budget | D | = BDG-06 |
+| NEW-03 | — | 1B | itinerary | C | = ITN-04 |
+| NEW-04 | — | 3 | reservations | D | §14 Fase 3 "treni e traghetti strutturati" |
+| NEW-05 | — | 2 + 3 | budget, reservations | D | BDG-07 in 2, RES-10 in 3 |
+| NEW-06 | — | 3 | maps | C | |
+| NEW-07 | — | 3 | trips | B | = TRP-10 |
+| NEW-08 | — | 3 | itinerary | C | = PLC-09 |
+| NEW-09 | — | 3 | billing | A | |
+| NEW-10 | — | 3 | places | C | = COL-06 |
+| NEW-11 | — | 1B | trips | B | = TRP-09 |
+| NEW-12 | — | **1** | editor, tutte | tutti | Accessibilità (§12) |
 
 Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Salvataggio 1B; Sync 1A/1B (test §15.5); Privacy 1 (account, export) e 2 (caselle); Sicurezza 0–2 (§12 di questo piano); Accessibilità 1; Offline 2; Disponibilità (export) 1; Modello (suggerimenti come proposte, orario del volo modificabile) 1B/2.
 
@@ -890,7 +914,8 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 
 ## 16. Regole di collaborazione
 
-- Branch per workstream (`feat/accounts`, `feat/trips`, …), PR piccole, review incrociata obbligatoria su `core/` (layout e statici comuni) e `trips/`.
+- Branch per workstream: `feat/accounts` (A), `feat/trips` (B), `feat/places` (C), `feat/reservations` (D), `feat/guides` (E), confermati nella 2.7. PR piccole, review incrociata obbligatoria su `core/` (layout e statici comuni) e `trips/`.
+- Ogni requisito appartiene al workstream dell'app in cui vive il codice (§3); chi fornisce servizi, segnali o eventi a un'altra app li concorda con una issue.
 - Convenzioni: Django 5.2, Python 3.12, ruff per lint e formattazione, pytest-django obbligatorio per ogni app, factory_boy, fixture condivise.
 - Un campo su un modello di un'altra app si chiede con una issue al proprietario. Nessuna migrazione nelle app altrui.
 - Contratto API stabile da `/api/v1/`; una modifica incompatibile richiede una nuova versione.
@@ -1002,7 +1027,7 @@ Le dispense del corso (5-15) hanno incontrato dettagli che né le specifiche v1.
 | --- | --- | --- | --- |
 | 18 | Result backend di Celery (il checkpoint 0.4 usa `.get()`) | Redis: `CELERY_RESULT_BACKEND = REDIS_URL` | 8 · task 0.4 |
 | 19 | Frequenze di beat e numero di ritentativi | Indicativi: `poll_mailpit` ogni 15 s; `max_retries=5` con `retry_backoff` | 8, 10 · Fase 1B |
-| 20 | App del task di export JSON più allegati (§12) | Nessuno (`core` o `accounts`) | 8 · Fase 1 |
+| 20 | App del task di export JSON più allegati (§12) | **Deciso nella 2.7:** `accounts` (A). Il §6 vieta ad `accounts` di importare le app più alte, quindi `accounts` definisce un segnale di raccolta e ogni app con dati dell'utente vi contribuisce con un ricevitore; `core` non serve | 8 · Fase 1 |
 | 21 | Convenzione sui nomi dei task | Nessuno | 8 · task 0.4 |
 
 ### 21.5 Tempo reale
@@ -1061,6 +1086,8 @@ Le dispense del corso (5-15) hanno incontrato dettagli che né le specifiche v1.
 | 51 | Controllo del tipo MIME degli allegati | Nessuno | 14 · Fase 1B |
 
 ### 21.10 Produzione
+
+Proprietario dei punti 52-62 (2.7): A, con i contributi di tutti i workstream (per esempio C per il punto 61, E per il punto 62).
 
 | # | Domanda | Default nelle dispense | Dispensa · task |
 | --- | --- | --- | --- |
