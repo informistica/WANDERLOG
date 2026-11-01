@@ -1,9 +1,13 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.4 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.5 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.2](specifiche-funzionali.md) (1 novembre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
 **Data:** 1 novembre 2026
+
+**Changelog 2.5 (1 novembre 2026).** Nessun requisito nuovo e nessun task cambiato.
+
+- Nuovo §21 "Dettagli da concordare": le scelte tecniche che specifiche e piano non fissano, raccolte dalle dispense del corso (5-11, 13-15) e raggruppate per area, ciascuna con il default usato negli esempi e il task a cui serve.
 
 **Changelog 2.4 (1 novembre 2026).** Nessun requisito nuovo e nessun task cambiato.
 
@@ -953,3 +957,119 @@ La 2.3 elencava quattro punti in cui le specifiche v1.1 si contraddicevano. Sono
 | Ricerca alloggi: Fase 1 o 2 | §4.2 (canale "Sito Django", fase 1) contro §14 Fase 2 e HOT-01..06 (P2) | Fase 2, come già nel piano | §4.2 (tolta dal canale di fase 1, rimando a fase 2); §9 "Ricerca alloggi (fase 2)" |
 | Versione delle specifiche | Commit `db2b15d` ("V.1.0") contro l'intestazione del file ("Versione documento: 1.1") | Vale l'intestazione del file; ora 1.2 | Intestazione e nota "Modifiche 1.2" |
 | Numero di app | §10 elenca 13 app; il repository ne ha 14 (`core`) | `core` resta: `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri | §10: riga `core` (14 app) |
+
+## 21. Dettagli da concordare
+
+Le dispense del corso (5-11 e 13-15) hanno incontrato dettagli che né le specifiche v1.2 né questo piano fissano. Non sono decisioni D (quelle restano al §4) e nessuno aggiunge requisiti: sono scelte tecniche che il team deve prendere prima del task indicato, per esempio in review o con un ADR (§16). Per ciascuna la colonna "Default nelle dispense" riporta la scelta usata negli esempi, valida finché il team non decide diversamente. "Nessuno" significa che le dispense non scelgono.
+
+### 21.1 Modello dati e account
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 1 | Chiave primaria di `User`: UUID o intero più `public_id`? | UUID (`id = UUIDField`, *Decisione proposta* del §5) | 5 · task 0.3 |
+| 2 | Quando eseguire `docker compose down -v` per introdurre `accounts.User` | Prima del primo `migrate` delle app, avvisando tutto il team (si perde il database di sviluppo) | 5 · task 0.3 |
+| 3 | Default di `Trip.visibility` | `private` | 5, 13 · task 1A.1 |
+| 4 | Dove si definisce `Visibility`, riusata da `Journal.visibility` (GDE-08) | In `trips/models.py`; `guides` (livello superiore) la importa | 5 · task 1A.1 |
+| 5 | Fonte del proprietario per la policy: `Trip.owner` o `Membership(role="owner")` | `create_trip` crea anche la `Membership` del proprietario; la policy legge solo `Membership` | 6, 13 · task 1A.1 |
+| 6 | ACC-04: chi eredita un viaggio condiviso quando il proprietario cancella l'account | Il primo `editor` per data di ingresso; senza editor il viaggio viene eliminato | 14 · Fase 1B |
+| 7 | ACC-04: `on_delete` delle altre FK verso `User` (`Invite.invited_by`, pagatore di una spesa, autore di una guida) | `Trip.owner` `PROTECT`, gestito dal segnale `user_deleting`; per le altre FK nessuno (ogni app sceglie: anonimizzare, `SET_NULL`, riassegnare) | 5, 14 · Fase 1B |
+
+### 21.2 Permessi e condivisione
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 8 | Link di visibilità: formato dell'URL, `link_token` in chiaro o come hash, rigenerazione | Token casuale in chiaro in `Trip.link_token`, confrontato con `secrets.compare_digest`; formato e rigenerazione: nessuno | 6 · task 1A.1 |
+| 9 | Che cosa risponde l'API a chi non può leggere un viaggio | 404 (non rivela che il viaggio esiste); 403 a chi legge ma non può modificare | 6, 7 · task 1A.1, Fase 1B |
+| 10 | Percorso della pagina di accettazione dell'invito | `/invites/<token>/` | 6, 10 · COL-01, Fase 1B |
+
+### 21.3 API REST
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 11 | Dimensione della pagina | `page_size = 20`, `max_page_size = 100` | 7 · task 0.5 |
+| 12 | Valori di throttling DRF | `invites` 20/ora, `assistant` 60/ora (indicativi) | 7 · task 0.5, Fase 1B |
+| 13 | Forma degli URL annidati sotto un viaggio | `trips/{trip_pk}/days/` con il router di DRF, senza pacchetti aggiuntivi | 7 · Fase 1B |
+| 14 | Filtri di TRP-03: `django-filter` (non nel §8) o `get_queryset()`; nomi dei parametri | `get_queryset()` con `request.query_params`; nomi: nessuno | 7 · Fase 1B |
+| 15 | Formato degli errori dell'API | Nessuno (resta quello di DRF) | 7 · task 0.5 |
+| 16 | Risposta dello spostamento lista → giorno (durata, distanza, geometria, `estimate_available`) | Un'unica chiamata che restituisce le tratte ricalcolate; campi: nessuno | 7 · ITN-01, ITN-03, Fase 1B |
+| 17 | File dello schema OpenAPI versionato e confrontato in CI | `docs/api/schema.yml` | 13 · task 0.8 |
+
+### 21.4 Task asincroni
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 18 | Result backend di Celery (il checkpoint 0.4 usa `.get()`) | Redis: `CELERY_RESULT_BACKEND = REDIS_URL` | 8 · task 0.4 |
+| 19 | Frequenze di beat e numero di ritentativi | Indicativi: `poll_mailpit` ogni 15 s; `max_retries=5` con `retry_backoff` | 8, 10 · Fase 1B |
+| 20 | App del task di export JSON più allegati (§12) | Nessuno (`core` o `accounts`) | 8 · Fase 1 |
+| 21 | Convenzione sui nomi dei task | Nessuno | 8 · task 0.4 |
+
+### 21.5 Tempo reale
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 22 | Canale delle scritture: API REST o WebSocket | API REST; il WebSocket solo per ricevere gli eventi | 9 · task 1A.5 |
+| 23 | Formato degli eventi (tipi, campi) | Messaggio `{"type": "trip.event", "payload": …}`; tipi e campi del payload: nessuno | 9 · task 1A.5 |
+| 24 | Revoca di un membro o viaggio reso privato durante una connessione aperta | Il servizio che revoca invia un evento che chiude le connessioni interessate | 9 · task 1A.5 |
+| 25 | Test asincroni: aggiungere `pytest-asyncio` (non nel §8) o no | No: test sincroni con `async_to_sync` | 9, 13 · task 1A.5 |
+| 26 | Timeout delle connessioni WebSocket inattive dietro il proxy | Nessuno | 15 · rilascio |
+
+### 21.6 Email
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 27 | `ACCOUNT_EMAIL_VERIFICATION` | `"mandatory"` | 10 · task 0.3, Fase 1B |
+| 28 | Email di allauth tramite Celery o sincrone | Tramite Celery: l'adapter di `accounts` invia il segnale `account_email_ready`, `notifications` lo riceve e accoda l'invio; senza ricevitori l'invio è sincrono (rispetta il §6) | 10 · Fase 1B |
+| 29 | Token dell'invito in chiaro negli argomenti del task (passa dal broker) | Sì, solo dentro il link e per il tempo della coda | 10 · COL-01, Fase 1B |
+| 30 | Lingua dell'email per un invitato senza account | La lingua di chi invita (`invited_by.language`) | 10 · COL-01 |
+| 31 | Contenuto dei template delle email | Nessuno | 10 · Fase 1B |
+| 32 | Fornitore SMTP di produzione e variabili `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` | Nessuno; prima del rilascio pubblico, insieme a D4 | 10, 15 · Fase 1C |
+
+### 21.7 Servizi esterni
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 33 | Firme delle interfacce di `maps` e tipi dei risultati | Dataclass | 11 · task 1A.2 |
+| 34 | Timeout e ritentativi delle chiamate esterne | `httpx.Timeout(5.0, connect=2.0)`; un ritento veloce sugli errori di connessione, i ritentativi lunghi nei task | 11 · task 1A.2 e adapter reali |
+| 35 | Cache (`CACHES`): backend, database Redis, durata | Nessuno (durata entro la licenza di D1) | 11 · task 1A.3 |
+| 36 | Dove stanno gli adapter non di mappe (cambi, LLM, voli, meteo, push) | Nell'app che li usa (`budget/fx.py`, `assistant/llm.py`, …), nel rispetto del §6 | 11 · Fase 1B, Fase 2 |
+| 37 | Provider `mock` con `DEBUG=False` (§0 punto 8 lo userebbe senza avvisare) | L'avvio fallisce se `MAPS_PROVIDER` o `FX_PROVIDER` restano `mock` in produzione | 15 · Fase 1C |
+
+### 21.8 Test e CI
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 38 | Settings dei test | Un solo `settings.py` (D3) più un `conftest.py` radice: Celery eager, channel layer in memoria, provider mock | 13 · task 0.2, 0.8 |
+| 39 | Come verificare l'80% di copertura per app (`--cov-fail-under` controlla il totale) | Un passo per app, per esempio `pytest --cov=trips --cov-fail-under=80 trips` | 13 · task 0.8 |
+| 40 | `gettext` per `compilemessages`: manca nell'immagine `python:3.12-slim` | Aggiungere `apt-get install -y gettext` al `Dockerfile` e al runner della CI | 13 · task 0.7, 0.8 |
+| 41 | Job e2e notturno | Workflow separato con `on: schedule` | 13 · Fase 1C |
+| 42 | Nomi delle fixture condivise | Nessuno (negli esempi `make_actor`) | 13 · Fase 1A |
+| 43 | `axe.min.js`: scaricato in CI o versionato | Nessuno | 14 · Fase 1 |
+
+### 21.9 Sicurezza, privacy e accessibilità
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 44 | Argon2 (*Decisione proposta* §12): `argon2-cffi` non è nel §8 | Se si adotta, aggiungerlo ai requirements | 14 · task 0.3 |
+| 45 | MFA dell'admin con allauth: serve l'extra `mfa` | Se si adotta, `django-allauth[mfa]` nei requirements | 14 · Fase 1B |
+| 46 | "Esci da tutti i dispositivi" (§12): `allauth.usersessions` o servizio nostro | Nessuno | 14 · Fase 1B |
+| 47 | Limiti di allauth (`ACCOUNT_RATE_LIMITS`) | I default di allauth | 14 · Fase 1B |
+| 48 | Versione WCAG di riferimento per il livello AA | Nessuno | 14 · Fase 1 |
+| 49 | Contenuto dell'export per i viaggi condivisi | Nessuno | 14 · Fase 1 |
+| 50 | Testi legali (termini, privacy, cookie) | Forniti o approvati da chi è responsabile del servizio, non scritti dagli studenti | 14 · Fase 1B |
+| 51 | Controllo del tipo MIME degli allegati | Nessuno | 14 · Fase 1B |
+
+### 21.10 Produzione
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 52 | Hosting (VPS con Docker, piattaforma gestita, server della scuola) | Nessuno | 15 · Fase 1C |
+| 53 | Proxy e HTTPS (richiede D4) | nginx con certbot (esempio) | 15 · Fase 1C |
+| 54 | Pool di connessioni del database (`"pool": True` richiede `psycopg[pool]`, non nel §8) | Nessuno | 15 · Fase 1C |
+| 55 | Numero di processi daphne e worker | Nessuno | 15 · Fase 1C |
+| 56 | `MEDIA_ROOT` e consegna dei file privati prima di D11 | Percorso d'esempio; permesso controllato da Django e file consegnato da nginx con `X-Accel-Redirect` (esempio) | 15 · Fase 1B, 1C |
+| 57 | Backup: frequenza, conservazione, luogo | `pg_dump` giornaliero (esempio); conservazione e luogo: nessuno | 15 · Fase 1C |
+| 58 | Log e raccolta degli errori | Log su standard output; errori per email agli `ADMINS` come minimo; servizio di raccolta: nessuno | 15 · Fase 1C |
+| 59 | Nuove variabili `SECURE_HSTS_SECONDS` e `STATIC_ROOT` in `.env.example` | `3600` e `/app/staticfiles` | 15 · Fase 1C |
+| 60 | Chi custodisce le variabili di produzione | Solo chi gestisce il rilascio (insegnante o responsabile indicato) | 15 · Fase 1C |
+| 61 | Quote e costi del provider di mappe in produzione | Nessuno (dopo D1) | 15 · Fase 1C |
+| 62 | Chi approva i contenuti editoriali originali del seed di produzione (§13) | Nessuno | 15 · Fase 1C |
