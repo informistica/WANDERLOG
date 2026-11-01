@@ -1,9 +1,20 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.2 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.3 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.1](specifiche-funzionali.md) (7 ottobre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
-**Data:** 31 ottobre 2026
+**Data:** 1 novembre 2026
+
+**Changelog 2.3 (1 novembre 2026).** Nessun requisito nuovo; si corregge la Fase 0 perché ogni checkpoint possa passare.
+
+- Fase 0 riordinata: prima `.gitignore` e ambiente (0.1), poi dipendenze e immagine (0.2), poi custom user e registrazione delle app (0.3), poi Celery e servizi del compose (0.4). Le app di terze parti entrano in `INSTALLED_APPS` solo dopo essere installate. I task successivi scalano di uno (0.5–0.9).
+- Configurazione di django-allauth allineata alla documentazione ufficiale: `AccountMiddleware`, `AUTHENTICATION_BACKENDS`, impostazioni per un utente senza username. `django.contrib.sites` e `SITE_ID` non servono. `ASGI_APPLICATION` impostato insieme a `daphne`.
+- `User` con chiave primaria UUID, decisa prima della prima migrazione (§5).
+- `.gitignore` creato per primo nel task 0.1, con checkpoint `git check-ignore`.
+- `env_file: .env` del compose anticipato al task 0.1, insieme alla lettura delle variabili in `settings.py`.
+- Checkpoint su `git grep` riscritto: esce con 0 quando il controllo passa (§0, istruzione 2).
+- Variabili email allineate: `EMAIL_HOST` e `EMAIL_PORT`; nel compose spariscono `MAILPIT_HOST` e `MAILPIT_PORT`.
+- Nuovo §20: incongruenze nelle specifiche da chiarire. Le specifiche non cambiano.
 
 La 2.1 non aggiunge requisiti. Registra due comportamenti visti sull’editor di riferimento il 31 ottobre 2026, già coperti da PLC-06, TRP-12, ITN-01 e ITN-03: lo spostamento di un luogo dalla lista a un giorno resta dopo un reload, e la tratta compare nel gesto, non in un job successivo. Non si copia lo schema né le API di quel prodotto.
 
@@ -41,7 +52,7 @@ WANDERLOG/                      # radice git
 ├── compose.yaml                # django, db (postgres:17), redis, mailpit (axllent/mailpit)
 ├── Dockerfile                  # python:3.12-slim, WORKDIR /app/WANDERLOG, runserver
 ├── requirements.txt            # Django>=5.2,<5.3, psycopg[binary], dj-database-url, redis, celery
-├── .dockerignore
+├── .dockerignore               # non esiste .gitignore
 ├── docs/
 │   └── specifiche-funzionali.md
 └── WANDERLOG/                  # progetto Django (contiene manage.py)
@@ -59,6 +70,8 @@ Cosa manca oggi e va sistemato nella Fase 0:
 - **Non esiste un custom user model.** Va creato **prima del primo `migrate`** delle app.
 - `settings.py` ha `SECRET_KEY` e `DEBUG = True` scritti nel codice e `ALLOWED_HOSTS = []`. La variabile `DEBUG` passata dal compose viene ignorata. `LANGUAGE_CODE = "en-us"`.
 - Il compose non ha un worker Celery, né beat, né il server Vite. Non c'è `.env.example`.
+- **Non esiste `.gitignore`.** Va creato prima di qualsiasi `.env`, ambiente virtuale o file generato (task 0.1).
+- Il compose passa le variabili con un blocco `environment:`; per l'email usa `MAILPIT_HOST` e `MAILPIT_PORT`, nomi che `settings.py` non legge. Il piano usa i nomi delle impostazioni Django, `EMAIL_HOST` ed `EMAIL_PORT` (§10).
 - Le dipendenze per API, realtime, login Google, immagini e test sono assenti.
 
 **Decisione aperta D3 (raccomandazione: confermare).** Le app restano **nella radice del progetto Django** (`WANDERLOG/<app>/`), come sono oggi. Il piano di Copilot proponeva `apps/` + `config/settings/` divisi: questo piano **non** li adotta. Spostarle costerebbe un refactoring senza benefici funzionali, mentre `settings.py` unico, letto da variabili d'ambiente, basta. Se il team vuole comunque `apps/`, lo spostamento va fatto nel task 0.1, prima di qualsiasi migrazione.
@@ -103,7 +116,7 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 | ID | Decisione | Fonte | Blocca | Raccomandazione |
 | --- | --- | --- | --- | --- |
 | **D1** | **Provider mappe e luoghi** (costi, cache consentita, qualità in Italia, embed, export verso Google Maps) | §11, §13, §18.2 | **Task 1A.3 (schema `places`)**. La Fase 0 e `maps` con mock possono partire | Decidere entro la fine della Fase 0. Documentare in `docs/adr/0001-provider-mappe.md` quali campi si possono salvare e per quanto tempo |
-| **D2** | **Editor SPA React o template Django + HTMX** | non nelle specifiche (il piano originale dice SPA) | Task 0.8 | SPA React (opzione A), se il team conosce React. Altrimenti B |
+| **D2** | **Editor SPA React o template Django + HTMX** | non nelle specifiche (il piano originale dice SPA) | Task 0.9 | SPA React (opzione A), se il team conosce React. Altrimenti B |
 | **D3** | **App nella radice del progetto Django o in `apps/`** | stato del repo | Task 0.1 | **Radice (consigliato)** |
 | D4 | Nome del prodotto e dominio | §18.1. `docs/PlaneIT.docx` propone «PlaneIT» e lo scheme `planeit://` | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local`. Il nome del docx non si adotta finché D4 non è chiusa |
 | D5 | Flutter o React Native per l'app | §18.3 | Fase 2 (app) | Fuori dal perimetro di questo piano |
@@ -120,11 +133,11 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 
 ## 5. Modello dati
 
-I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da `core.BaseModel`: chiave primaria UUID (non indovinabile, §12), `created_at`, `updated_at`. Le FK tra app usano riferimenti stringa (`"trips.Trip"`).
+I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da `core.BaseModel`: chiave primaria UUID (non indovinabile, §12), `created_at`, `updated_at`. `User` eredita da `AbstractUser`, ma ha anch'esso la chiave primaria UUID (nota sotto). Le FK tra app usano riferimenti stringa (`"trips.Trip"`).
 
 | Entità §6 | Modello | App | Campi principali | FK / relazioni principali | Fase |
 | --- | --- | --- | --- | --- | --- |
-| Utente | `User(AbstractUser)` | `accounts` | email (unica, `USERNAME_FIELD`), name, photo, language (`it`/`en`), distance_unit (`km`/`mi`), default_currency, timezone, plan (`free`/`pro`, aggiornato da `billing`) | — | **0** |
+| Utente | `User(AbstractUser)` | `accounts` | id UUID (chiave primaria), email (unica, `USERNAME_FIELD`), name, photo, language (`it`/`en`), distance_unit (`km`/`mi`), default_currency, timezone, plan (`free`/`pro`, aggiornato da `billing`) | — | **0** |
 | (TRP-05 "follower") | `Follow` | `accounts` | follower, followed | FK `User` ×2, unica | 1 (minimo, senza feed: §16) |
 | Utente: caselle collegate | `ConnectedMailbox`, `MailboxReadLog` | `accounts` | provider, token cifrato, scope, revoked_at; log dei messaggi letti | FK `User` | 2 (ACC-06, RES-05) |
 | Viaggio | `Trip` | `trips` | title, cover, cover_source (`auto`/`custom`), start_date?, end_date?, timezone, visibility (`private`/`link`/`followers`/`public`), currency, budget_total?, archived, default_transport (Fase 2, TRP-13), inbound_token (casuale, per `trip+<token>@`), link_token | FK `owner → User` | 1A |
@@ -160,6 +173,7 @@ I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da
 
 Note sul modello:
 
+- **Chiave primaria di `User`** *(Decisione proposta)*. `id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)`, come gli altri modelli. Motivi: lo stesso tipo di identificatore in tutto il dominio; id non indovinabili negli URL e nell'API (§12); la chiave primaria va fissata **prima della prima migrazione** di `accounts` (task 0.3), perché cambiarla dopo significa migrare tutte le FK verso `User`, comprese quelle delle app di Django e di allauth. *Alternativa:* lasciare la chiave intera di default (`DEFAULT_AUTO_FIELD`) e aggiungere un campo `public_id = UUIDField(unique=True, default=uuid.uuid4, editable=False)` da usare negli URL e nell'API. È più semplice da leggere nell'admin, ma obbliga a non esporre mai `pk` e a cercare sempre per `public_id`. Va scelta una delle due prima del task 0.3.
 - **Tipi di prenotazione.** Le specifiche hanno due elenchi diversi: RES-01 (volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato) e §6 (volo, alloggio, auto, treno, bus, traghetto, evento, altro). *Decisione proposta:* l'enum è l'unione dei due (`flight`, `lodging`, `car`, `restaurant`, `train`, `bus`, `ferry`, `cruise`, `event`, `other`). "Allegato" diventa un `Attachment` senza prenotazione.
 - **Mezzi di trasporto.** L'enum di `Leg` contiene già tutti i mezzi del §6. In Fase 1 l'interfaccia abilita auto, a piedi, trasporto pubblico e bici (ITN-04). Gli altri mezzi si abilitano in Fase 3 (ITN-10).
 - **Copertura del provider (§11).** Se il provider non fornisce una stima, `Leg.estimate_available = False` e l'interfaccia lo dice, senza inventare un tempo.
@@ -249,7 +263,7 @@ Regole di applicazione:
 
 ## 8. Requirements
 
-`requirements.txt` (runtime). Le righe vanno aggiunte **nella fase indicata**, non tutte subito.
+`requirements.txt` (runtime). Le righe vanno aggiunte **nella fase indicata**, non tutte subito. Un pacchetto si installa (task 0.2) **prima** di comparire in `INSTALLED_APPS` (task 0.3): altrimenti `manage.py` fallisce con `ModuleNotFoundError`.
 
 ```text
 # esistenti
@@ -294,7 +308,7 @@ Il `Dockerfile` installa `requirements-dev.txt` quando è impostato `ARG DEV=1`,
 
 ## 9. Compose (sviluppo)
 
-Le modifiche a `compose.yaml` mantengono i servizi esistenti (`postgres:17`, `axllent/mailpit`, i nomi `db`, `redis`, `mailpit`) e spostano le variabili in `.env`.
+Le modifiche a `compose.yaml` mantengono i servizi esistenti (`postgres:17`, `axllent/mailpit`, i nomi `db`, `redis`, `mailpit`) e spostano le variabili in `.env`. Questo è lo stato a fine Fase 0: `env_file: .env` si introduce nel task 0.1 (al posto del blocco `environment:` del servizio `django`, eliminando `MAILPIT_HOST` e `MAILPIT_PORT`), `args: { DEV: "1" }` nel task 0.2, worker, beat, healthcheck del db e `redis:7` nel task 0.4.
 
 ```yaml
 x-django: &django
@@ -395,6 +409,7 @@ CELERY_BROKER_URL=redis://redis:6379/0
 CHANNEL_LAYER_URL=redis://redis:6379/1
 
 # --- Email in uscita (Mailpit in dev) ---
+# nomi delle impostazioni Django; sostituiscono MAILPIT_HOST/MAILPIT_PORT del compose attuale
 EMAIL_HOST=mailpit
 EMAIL_PORT=1025
 DEFAULT_FROM_EMAIL=noreply@wanderlog.local
@@ -505,7 +520,7 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 | Export (§12 Disponibilità) | Archivio scaricabile (JSON più allegati) generato da un task Celery e inviato via link firmato | 1 |
 | Pagine legali (§9) | Termini, privacy, cookie, in `core`. La privacy policy documenta l'analisi della posta (§13) | 1 |
 | Licenze dei contenuti (§13) | Recensioni e foto mostrate solo se la licenza del provider (D1) lo permette, con attribuzione. Nessuno scraping di Wanderlog. Fixture con contenuti originali | 1 |
-| Admin | Django admin solo per staff e admin, con 2FA *(Decisione proposta, allauth MFA)* | 1 |
+| Admin | Django admin solo per staff e admin, con 2FA *(Decisione proposta, allauth MFA)*. Il login dell'admin non passa da allauth (niente rate limit né 2FA): la documentazione di allauth indica `admin.site.login = secure_admin_login(admin.site.login)` in `urls.py` | 1 |
 
 ---
 
@@ -532,30 +547,97 @@ Accessibilità (§12, NEW-12):
 
 ### Fase 0 — Fondamenta (Dev A guida, tutti contribuiscono)
 
-**0.1 Settings e ambiente**
-- Rendere `WANDERLOG/WANDERLOG/settings.py` configurabile da ambiente: `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, email. Mantenere `dj_database_url.config(...)`.
-- Creare `.env.example` (§10). Aggiungere `.env` a `.gitignore` e `.dockerignore`.
+**0.1 `.gitignore`, settings e ambiente**
+- **Per primo**, prima di creare `.env` o un ambiente virtuale: `.gitignore` nella radice (oggi non esiste), con almeno:
+  ```gitignore
+  # segreti
+  .env
+  .env.*
+  !.env.example
+  # Python
+  __pycache__/
+  *.py[cod]
+  .venv/
+  venv/
+  .pytest_cache/
+  .ruff_cache/
+  .coverage
+  htmlcov/
+  # Django
+  db.sqlite3
+  media/
+  staticfiles/
+  # Node / Vite [SPA]
+  node_modules/
+  dist/
+  # Celery, Docker, strumenti
+  celerybeat-schedule
+  graphify-out/
+  .DS_Store
+  Thumbs.db
+  ```
+  Aggiungere `.env` anche a `.dockerignore`.
+- Rendere `WANDERLOG/WANDERLOG/settings.py` configurabile da ambiente: `SECRET_KEY` (da `DJANGO_SECRET_KEY`), `DEBUG` (falso se assente), `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `EMAIL_HOST`, `EMAIL_PORT`, `DEFAULT_FROM_EMAIL`. Mantenere `dj_database_url.config(...)`.
+- Creare `.env.example` (§10) e, da quello, il `.env` locale (non versionato) con una `DJANGO_SECRET_KEY` vera.
+- In `compose.yaml`, nel servizio `django`: sostituire il blocco `environment:` con `env_file: .env` (anticipato dal §9). `MAILPIT_HOST` e `MAILPIT_PORT` spariscono: in `.env` ci sono `EMAIL_HOST=mailpit` ed `EMAIL_PORT=1025`.
 - Applicare D3 (raccomandato: nessuno spostamento).
-- Checkpoint: `docker compose run --rm django python manage.py check --deploy` mostra solo avvisi attesi in sviluppo. `git grep -n "django-insecure"` non restituisce nulla.
+- Checkpoint (ogni comando esce con 0 quando il controllo passa):
+  ```bash
+  git check-ignore -q .env
+  docker compose run --rm django python manage.py check --deploy
+  # bash / Git Bash: git grep esce con 1 quando non trova nulla
+  git grep -q django-insecure; test $? -eq 1
+  # PowerShell
+  powershell -NoProfile -Command 'git grep -q django-insecure; exit [int]($LASTEXITCODE -ne 1)'
+  ```
+  Criterio: `.env` è ignorato da git; `check --deploy` non dà errori (gli avvisi di sicurezza attesi con `DEBUG=True` in sviluppo sono ammessi); la stringa `django-insecure` non è più in nessun file versionato.
 
-**0.2 Custom user model e registrazione delle app (prima di ogni `migrate`)**
-- Se il volume `postgres_data` contiene già tabelle create da un `migrate` precedente, azzerarlo con `docker compose down -v`. **Attenzione: cancella i dati del database di sviluppo.**
-- `accounts/models.py`: `User(AbstractUser)` con `username = None`, `email` unica come `USERNAME_FIELD`, manager personalizzato e i campi del §5. In `settings.py`: `AUTH_USER_MODEL = "accounts.User"`.
-- Aggiungere a `INSTALLED_APPS`, nell'ordine: `daphne` (in testa), app Django, `rest_framework`, `drf_spectacular`, `channels`, `allauth`, `allauth.account`, `allauth.socialaccount`, `allauth.socialaccount.providers.google`, poi `core`, `accounts`, `notifications`, `billing`, `maps`, `trips`, `places`, `itinerary`, `reservations`, `budget`, `checklists`, `guides`, `lodging`, `assistant` (e `django_vite` con [SPA]).
-- `core/models.py`: `BaseModel` astratto (UUID, timestamp).
-- Registrare `User` nell'admin.
+**0.2 Dipendenze e immagine (prima di registrare le app)**
+- Aggiornare `requirements.txt` (blocco "Fase 0" del §8; `django-vite` solo con D2 = A) e creare `requirements-dev.txt`.
+- `Dockerfile` con `ARG DEV` che installa `requirements-dev.txt`; nel compose, servizio `django`, `build: { context: ., args: { DEV: "1" } }`.
+- In questo task **non** si tocca `INSTALLED_APPS`.
 - Checkpoint:
   ```bash
+  docker compose build django
+  docker compose run --rm django pip check
+  docker compose run --rm django python -c "import rest_framework, drf_spectacular, channels, channels_redis, daphne, allauth, PIL, httpx"
+  docker compose run --rm django sh -c "pytest --version && ruff --version"
+  ```
+
+**0.3 Custom user model e registrazione delle app (prima di ogni `migrate`)**
+- Se il volume `postgres_data` contiene già tabelle create da un `migrate` precedente, azzerarlo con `docker compose down -v`. **Attenzione: cancella i dati del database di sviluppo.**
+- `core/models.py`: `BaseModel` astratto (UUID, timestamp).
+- `accounts/models.py`: `User(AbstractUser)` con `id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)` (§5), `username = None`, `email` unica come `USERNAME_FIELD`, `REQUIRED_FIELDS = []`, manager personalizzato e i campi del §5. In `settings.py`: `AUTH_USER_MODEL = "accounts.User"`.
+- Aggiungere a `INSTALLED_APPS`, nell'ordine: `daphne` (in testa), app Django, `rest_framework`, `drf_spectacular`, `channels`, `allauth`, `allauth.account`, `allauth.socialaccount`, `allauth.socialaccount.providers.google`, poi `core`, `accounts`, `notifications`, `billing`, `maps`, `trips`, `places`, `itinerary`, `reservations`, `budget`, `checklists`, `guides`, `lodging`, `assistant` (e `django_vite` con [SPA]).
+- `daphne` sostituisce `runserver` e richiede `ASGI_APPLICATION = "WANDERLOG.asgi.application"`; l'`asgi.py` attuale basta fino al task 0.6.
+- django-allauth, secondo la documentazione ufficiale (quickstart e "custom user models"):
+  ```python
+  MIDDLEWARE = [
+      # ... middleware esistenti ...
+      "allauth.account.middleware.AccountMiddleware",
+  ]
+  AUTHENTICATION_BACKENDS = [
+      "allauth.account.auth_backends.AuthenticationBackend",
+  ]
+  ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+  ACCOUNT_LOGIN_METHODS = {"email"}
+  ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+  ```
+  In `urls.py`: `path("accounts/", include("allauth.urls"))`. Il context processor `django.template.context_processors.request` è già nei settings generati. `django.contrib.sites` e `SITE_ID` non sono richiesti da allauth: non aggiungerli. La configurazione del provider Google (`GOOGLE_OAUTH_*`) si completa con ACC-01 (Fase 1B).
+- Registrare `User` nell'admin con un `UserAdmin` adattato (niente `username`, ordinamento per email).
+- Checkpoint:
+  ```bash
+  docker compose run --rm django python manage.py check
   docker compose run --rm django python manage.py makemigrations accounts
   docker compose run --rm django python manage.py migrate
   docker compose run --rm django python manage.py makemigrations --check --dry-run
-  docker compose run --rm django python -c "import django,os;os.environ.setdefault('DJANGO_SETTINGS_MODULE','WANDERLOG.settings');django.setup();from django.contrib.auth import get_user_model as g;assert g()._meta.label=='accounts.User'"
+  docker compose run --rm django python -c "import django,os;os.environ.setdefault('DJANGO_SETTINGS_MODULE','WANDERLOG.settings');django.setup();from django.contrib.auth import get_user_model as g;from django.db import models;assert g()._meta.label=='accounts.User';assert isinstance(g()._meta.pk,models.UUIDField)"
   ```
   Criterio: `accounts/migrations/0001_initial.py` esiste ed è la prima migrazione applicata insieme a quelle di `auth`.
 
-**0.3 Requirements e compose**
-- Aggiornare `requirements.txt` (blocco "Fase 0" del §8), creare `requirements-dev.txt` e aggiornare il `Dockerfile` (`ARG DEV`) e `compose.yaml` (§9).
+**0.4 Celery e servizi del compose**
 - `WANDERLOG/WANDERLOG/celery.py` più l'import in `WANDERLOG/WANDERLOG/__init__.py`. Task di prova `core.tasks.ping`.
+- `compose.yaml` come al §9: servizi `celery-worker` e `celery-beat`, healthcheck di `db`, `redis:7`.
 - Checkpoint:
   ```bash
   docker compose up -d --build
@@ -563,26 +645,26 @@ Accessibilità (§12, NEW-12):
   docker compose exec django python -c "from core.tasks import ping; print(ping.delay().get(timeout=10))"   # stampa pong
   ```
 
-**0.4 Scheletro dell'API**
+**0.5 Scheletro dell'API**
 - DRF configurato: autenticazione di sessione, paginazione in `core`, permessi di default `IsAuthenticated`, throttling.
 - Schema OpenAPI con drf-spectacular su `/api/v1/schema/` e documentazione su `/api/v1/docs/`.
 - `core.views.health` su `GET /api/v1/health/` → `{"status":"ok","db":true,"redis":true}`.
 - Checkpoint: `curl -fsS http://localhost:8000/api/v1/health/` risponde 200 con `db` e `redis` a `true`. `docker compose exec django python manage.py spectacular --file /tmp/schema.yml --validate` esce con 0.
 
-**0.5 ASGI e Channels**
-- `asgi.py` con `ProtocolTypeRouter` (HTTP e WebSocket), `AllowedHostsOriginValidator`, `AuthMiddlewareStack`. `CHANNEL_LAYERS` su `CHANNEL_LAYER_URL`. Consumer di prova `ws/ping/`.
+**0.6 ASGI e Channels**
+- `asgi.py` con `ProtocolTypeRouter` (HTTP e WebSocket; `ASGI_APPLICATION` è già impostato dal task 0.3), `AllowedHostsOriginValidator`, `AuthMiddlewareStack`. `CHANNEL_LAYERS` su `CHANNEL_LAYER_URL`. Consumer di prova `ws/ping/`.
 - Checkpoint: test `core/tests/test_ws.py` con `WebsocketCommunicator` verde. Il log di `runserver` riporta l'avvio ASGI/daphne.
 
-**0.6 i18n di base**
+**0.7 i18n di base**
 - Impostazioni del §13, cartelle `locale/`, `i18n_patterns` per le pagine pubbliche, home `core` minima con selettore di lingua.
 - Checkpoint: `curl -fsS http://localhost:8000/it/` e `curl -fsS http://localhost:8000/en/` rispondono 200 con testi diversi. `docker compose exec django python manage.py compilemessages` esce con 0.
 
-**0.7 Qualità e CI**
+**0.8 Qualità e CI**
 - `ruff.toml` nella radice, `WANDERLOG/pytest.ini`, `WANDERLOG/.importlinter` (livelli del §6).
 - `.github/workflows/ci.yml` con i servizi `postgres:17` e `redis:7`. Passi: `ruff check`, `ruff format --check`, `lint-imports`, `manage.py check`, `makemigrations --check --dry-run`, `compilemessages`, `pytest --cov`, confronto dello schema OpenAPI. [SPA] `npm ci`, `npm run typecheck`, `npm run lint`, `npm run build`.
 - Checkpoint: `docker compose exec django sh -c "ruff check .. && lint-imports && pytest -q"` esce con 0. La CI è verde sul branch.
 
-**0.8 Frontend [SPA]** (con D2 = B: template base dell'editor e asset statici)
+**0.9 Frontend [SPA]** (con D2 = B: template base dell'editor e asset statici)
 - `frontend/editor` (Vite + React + TS) e `frontend/packages/shared` (client API generato da OpenAPI, i18next). Integrazione con `django-vite`. Pagina `/trips/<id>/edit` con layout a due colonne (sezioni | mappa) che chiama `/api/v1/health/`.
 - Checkpoint: con `docker compose up`, `http://localhost:8000/it/trips/demo/edit` mostra il layout e carica il bundle dal server Vite. `npm run build` esce con 0.
 
@@ -855,3 +937,14 @@ Non si recepiscono, finché non sono nelle specifiche:
 - costo previsto aggiornato a ogni tappa, impatto ambientale dei trasporti, badge e classifica, fotolibro, vendita degli itinerari delle guide.
 
 L'account del web resta quello del §5: email come `USERNAME_FIELD`, nome, niente username né data di nascita.
+
+## 20. Incongruenze nelle specifiche da chiarire
+
+Le specifiche non si modificano in questo piano. I punti seguenti vanno chiariti con chi le ha scritte; fino ad allora vale la scelta indicata.
+
+| Punto | Dove | Cosa dicono | Scelta del piano finché non si chiarisce |
+| --- | --- | --- | --- |
+| Ricerca alloggi: Fase 1 o 2 | §4.2 (canale "Sito Django", fase 1) contro §14 Fase 2 e HOT-01..06 (P2) | Il canale del sito in Fase 1 include la ricerca alloggi; la roadmap e le priorità la mettono in Fase 2 | Fase 2 (§14 delle specifiche e ID HOT a P2) |
+| Livelli di visibilità: 3 o 4 | §3 e GDE-08 ("stesse tre scelte del piano") contro §6 e TRP-05 | §3 descrive Wanderlog: pubblico, amici (follower reciproci), privato. §6 e TRP-05 hanno quattro valori: privato, link, follower, pubblico | Quattro valori di TRP-05 / §6; il diario (GDE-08) usa gli stessi |
+| Versione delle specifiche | commit `db2b15d` contro l'intestazione del file | Il messaggio di commit dice "V.1.0", il file dice "Versione documento: 1.1" | Si cita la 1.1, come nell'intestazione di questo piano |
+| Numero di app | §10 delle specifiche contro il repository | §10 elenca 13 app; il repository ne ha 14, in più c'è `core` | `core` resta: contiene `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri |
