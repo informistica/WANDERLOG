@@ -2,9 +2,16 @@
 
 **Prodotto di lavoro:** pianificatore di viaggi web (Django) e app mobile  
 **Riferimento analizzato:** [Wanderlog](https://wanderlog.com/) (Travelchime Inc.)  
-**Versione documento:** 1.1  
-**Data:** 7 ottobre 2026  
+**Versione documento:** 1.2  
+**Data:** 1 novembre 2026 (1.1: 7 ottobre 2026)  
 **Stato:** bozza aggiornata dopo esplorazione dell’editor autenticato
+
+**Modifiche 1.2 (1 novembre 2026).** Nessun requisito nuovo; si tolgono quattro contraddizioni interne:
+
+- visibilità del viaggio e del diario: quattro livelli (`privato`, `link`, `follower`, `pubblico`), come §6 e TRP-05; in §3 resta la nota sui tre livelli osservati in Wanderlog; GDE-08 usa le stesse quattro scelte;
+- ricerca alloggi: Fase 2, come §14 e HOT-01…HOT-06 (P2); tolta dal canale “Sito Django” di fase 1 in §4.2 e segnata fase 2 in §9;
+- §10: aggiunta l’app `core`, già presente nel repository (14 app);
+- versione: il documento valido è quello con l’intestazione “Versione documento”; il commit `db2b15d` (“V.1.0”) conteneva la 1.1.
 
 Questo documento descrive cosa deve fare il prodotto. Non è un clone del marchio, dei testi, delle guide o del codice di Wanderlog. Le funzioni sono ricostruite da pagine pubbliche, help center e FAQ, e vanno reimplementate con contenuti, dati e identità propri.
 
@@ -49,7 +56,7 @@ Funzioni osservate:
 | Area | Comportamento |
 | --- | --- |
 | Piano e diario | Due viste dello stesso viaggio. Il piano è panoramica, itinerario e budget. Il diario è il percorso dei luoghi visitati, con foto, note e linee sulla mappa |
-| Piano di viaggio | Date, copertina, sezioni riordinabili, note, salvataggio automatico, annulla e ripeti. Visibilità: pubblico, amici (follower reciproci), privato (proprietario e chi ha il link). Default osservato: amici |
+| Piano di viaggio | Date, copertina, sezioni riordinabili, note, salvataggio automatico, annulla e ripeti. Visibilità in Wanderlog: pubblico, amici (follower reciproci), privato (proprietario e chi ha il link). Default osservato: amici. Il prodotto usa quattro livelli: privato, link, follower, pubblico (§6, TRP-05) |
 | Luoghi | Liste con ricerca, luoghi consigliati, copia e sposta multiplo tra liste e giorni. Scheda pubblica con foto, categoria, voto e recensioni |
 | Itinerario | Un blocco per giorno, sottotitolo, “Compila giorno” per destinazione, ottimizzazione Pro |
 | Mappa del piano | Google Maps affiancata all’editor. Ricerca, livelli per liste e giorni, hotel, export Pro, apertura della zona in Google Maps |
@@ -105,7 +112,7 @@ Struttura dell’editor, vista sul viaggio vuoto:
 
 | Canale | Ruolo | Fase |
 | --- | --- | --- |
-| Sito Django | Marketing, guide, ricerca alloggi, editor del viaggio, impostazioni, area admin | 1 |
+| Sito Django | Marketing, guide, editor del viaggio, impostazioni, area admin. La ricerca alloggi arriva in fase 2 (§7.11, §14) | 1 |
 | API REST | Contratto unico per web e app | 1 |
 | App iOS e Android | Stesso editor, ottimizzata per l’uso in viaggio e offline | 2 |
 | Estensione browser | Salvare un luogo da una pagina web nel viaggio aperto | 3 |
@@ -336,7 +343,7 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 | GDE-05 | P2 | Un utente pubblica una guida. Resta in bozza finché lo staff non la approva, oppure è subito visibile come contenuto della community con segnalazione. |
 | GDE-06 | P2 | Domande e risposte sulla destinazione, con moderazione. |
 | GDE-07 | P2 | Medie climatiche mensili sulla destinazione. |
-| GDE-08 | P2 | Diario di viaggio collegato al piano: riepilogo, copertina, fermate con foto e note, linee del percorso, mappa anche satellitare, condivisione propria. La privacy del diario è indipendente nel pannello, con le stesse tre scelte del piano. |
+| GDE-08 | P2 | Diario di viaggio collegato al piano: riepilogo, copertina, fermate con foto e note, linee del percorso, mappa anche satellitare, condivisione propria. La privacy del diario è indipendente nel pannello, con le stesse quattro scelte del piano (TRP-05). |
 | GDE-09 | P3 | Guide scaricabili per la lettura offline nell’app. |
 
 **Criterio GDE-03.** Dato un itinerario pubblico e un viaggio aperto dell’utente, quando preme “Aggiungi” su un luogo e sceglie il giorno 2, quel luogo compare nel giorno 2 e sulla mappa del suo viaggio.
@@ -467,7 +474,7 @@ Queste funzioni non sono una copia: rispondono ai vuoti osservati e al contesto 
 
 - Home: proposta di valore, avvio viaggio, guide in evidenza.
 - Destinazione, luogo, guida, itinerario, road trip.
-- Ricerca alloggi.
+- Ricerca alloggi (fase 2).
 - Editor viaggio: colonna sezioni e itinerario, colonna mappa, pannelli prenotazioni, budget, checklist, condivisione, assistente.
 - Autenticazione, profilo, impostazioni, abbonamento.
 - Pagine legali: termini, privacy, cookie.
@@ -488,6 +495,7 @@ Applicazioni previste, tutte dietro un’API usata anche dall’app:
 
 | App Django | Responsabilità |
 | --- | --- |
+| `core` | Modello base comune (`BaseModel`), controllo di salute (health), home, pagine legali |
 | `accounts` | Utenti, profilo, lingue, cancellazione |
 | `trips` | Viaggi, giorni, sezioni, visibilità, collaboratori, attività |
 | `places` | Anagrafica luoghi, voci, liste |

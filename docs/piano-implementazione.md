@@ -1,9 +1,14 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.3 (revisione del `plan.md` generato da GitHub Copilot)
-**Base:** [specifiche funzionali v1.1](specifiche-funzionali.md) (7 ottobre 2026)
+**Versione:** 2.4 (revisione del `plan.md` generato da GitHub Copilot)
+**Base:** [specifiche funzionali v1.2](specifiche-funzionali.md) (1 novembre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
 **Data:** 1 novembre 2026
+
+**Changelog 2.4 (1 novembre 2026).** Nessun requisito nuovo e nessun task cambiato.
+
+- Base aggiornata alle specifiche v1.2, che risolvono le incongruenze elencate nella 2.3.
+- §20 diventa "Incongruenze risolte": per ogni punto la decisione e dove è stata corretta. Visibilità a quattro livelli decisa da Mauro Spinarelli il 1/11/2026.
 
 **Changelog 2.3 (1 novembre 2026).** Nessun requisito nuovo; si corregge la Fase 0 perché ogni checkpoint possa passare.
 
@@ -938,13 +943,13 @@ Non si recepiscono, finché non sono nelle specifiche:
 
 L'account del web resta quello del §5: email come `USERNAME_FIELD`, nome, niente username né data di nascita.
 
-## 20. Incongruenze nelle specifiche da chiarire
+## 20. Incongruenze risolte
 
-Le specifiche non si modificano in questo piano. I punti seguenti vanno chiariti con chi le ha scritte; fino ad allora vale la scelta indicata.
+La 2.3 elencava quattro punti in cui le specifiche v1.1 si contraddicevano. Sono stati decisi il 1 novembre 2026 e corretti nelle specifiche v1.2; il piano non cambia, perché già seguiva queste scelte.
 
-| Punto | Dove | Cosa dicono | Scelta del piano finché non si chiarisce |
+| Punto | Contraddizione (specifiche v1.1) | Decisione | Dove è stato corretto (specifiche v1.2) |
 | --- | --- | --- | --- |
-| Ricerca alloggi: Fase 1 o 2 | §4.2 (canale "Sito Django", fase 1) contro §14 Fase 2 e HOT-01..06 (P2) | Il canale del sito in Fase 1 include la ricerca alloggi; la roadmap e le priorità la mettono in Fase 2 | Fase 2 (§14 delle specifiche e ID HOT a P2) |
-| Livelli di visibilità: 3 o 4 | §3 e GDE-08 ("stesse tre scelte del piano") contro §6 e TRP-05 | §3 descrive Wanderlog: pubblico, amici (follower reciproci), privato. §6 e TRP-05 hanno quattro valori: privato, link, follower, pubblico | Quattro valori di TRP-05 / §6; il diario (GDE-08) usa gli stessi |
-| Versione delle specifiche | commit `db2b15d` contro l'intestazione del file | Il messaggio di commit dice "V.1.0", il file dice "Versione documento: 1.1" | Si cita la 1.1, come nell'intestazione di questo piano |
-| Numero di app | §10 delle specifiche contro il repository | §10 elenca 13 app; il repository ne ha 14, in più c'è `core` | `core` resta: contiene `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri |
+| Livelli di visibilità | §3 e GDE-08 ("stesse tre scelte del piano") contro §6 e TRP-05 (privato, link, follower, pubblico) | Quattro livelli, anche per il diario. Decisione di Mauro Spinarelli, 1/11/2026 | §3 (nota: Wanderlog ne ha tre, il prodotto quattro); GDE-08 "stesse quattro scelte del piano (TRP-05)" |
+| Ricerca alloggi: Fase 1 o 2 | §4.2 (canale "Sito Django", fase 1) contro §14 Fase 2 e HOT-01..06 (P2) | Fase 2, come già nel piano | §4.2 (tolta dal canale di fase 1, rimando a fase 2); §9 "Ricerca alloggi (fase 2)" |
+| Versione delle specifiche | Commit `db2b15d` ("V.1.0") contro l'intestazione del file ("Versione documento: 1.1") | Vale l'intestazione del file; ora 1.2 | Intestazione e nota "Modifiche 1.2" |
+| Numero di app | §10 elenca 13 app; il repository ne ha 14 (`core`) | `core` resta: `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri | §10: riga `core` (14 app) |
