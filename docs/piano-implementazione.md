@@ -1,9 +1,17 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.5 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.6 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.2](specifiche-funzionali.md) (1 novembre 2026)
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
 **Data:** 1 novembre 2026
+
+**Changelog 2.6 (1 novembre 2026).** Nessun requisito nuovo. D2 è decisa: cambia il frontend della Fase 0 e della Fase 1.
+
+- **D2 decisa da Mauro Spinarelli il 1/11/2026:** template Django + HTMX, con un'"isola" JavaScript solo per la mappa interattiva (Leaflet o il JavaScript del provider scelto in D1, caricato solo nelle pagine con mappa; finché D1 è aperta il provider è `mock`). React è escluso dalla Fase 1; si potrà riconsiderare per l'app della Fase 2, che usa l'API DRF.
+- Tolti i marcatori [SPA] e ciò che valeva solo con l'opzione A: `django-vite` (§8), servizio `vite` (§9), passi npm della CI (0.8), client TypeScript (§11), i18next (§13), `frontend/` (§3, §16, §17), righe Node del `.gitignore` (0.1), origine `http://localhost:5173` del server Vite da `CSRF_TRUSTED_ORIGINS` (§10).
+- Riscritti §2 (frontend), §4 (D2), task 0.9 e il checkpoint finale della Fase 0; nuove righe nel §11 (viste e partial HTMX) e nel §12 (CSRF con HTMX); riordino da tastiera nel §13 senza `@dnd-kit`.
+- Adattati a D2, come *Decisione proposta*: annulla e ripeti di TRP-12 (pila lato server invece che lato client) e bozza del visitatore di ACC-05 (sessione Django invece di `localStorage`).
+- §21: aggiornati i punti 16, 22, 23 e 24; nuovo §21.11 "Frontend (D2)".
 
 **Changelog 2.5 (1 novembre 2026).** Nessun requisito nuovo e nessun task cambiato.
 
@@ -78,7 +86,7 @@ Cosa manca oggi e va sistemato nella Fase 0:
 - Le 14 app esistono (`models.py` vuoti, cartelle `migrations/` vuote) ma **non sono in `INSTALLED_APPS`**.
 - **Non esiste un custom user model.** Va creato **prima del primo `migrate`** delle app.
 - `settings.py` ha `SECRET_KEY` e `DEBUG = True` scritti nel codice e `ALLOWED_HOSTS = []`. La variabile `DEBUG` passata dal compose viene ignorata. `LANGUAGE_CODE = "en-us"`.
-- Il compose non ha un worker Celery, né beat, né il server Vite. Non c'è `.env.example`.
+- Il compose non ha un worker Celery né beat. Non c'è `.env.example`.
 - **Non esiste `.gitignore`.** Va creato prima di qualsiasi `.env`, ambiente virtuale o file generato (task 0.1).
 - Il compose passa le variabili con un blocco `environment:`; per l'email usa `MAILPIT_HOST` e `MAILPIT_PORT`, nomi che `settings.py` non legge. Il piano usa i nomi delle impostazioni Django, `EMAIL_HOST` ed `EMAIL_PORT` (§10).
 - Le dipendenze per API, realtime, login Google, immagini e test sono assenti.
@@ -92,10 +100,10 @@ Cosa manca oggi e va sistemato nella Fase 0:
 ## 2. Approccio generale (confermato dal piano originale, con correzioni)
 
 - **Monolite Django modulare.** Un'API REST unica per web e futura app (§4.2): `/api/v1/` con Django REST Framework e drf-spectacular (OpenAPI). *Decisione proposta.*
-- **Frontend.** Pagine pubbliche (home, destinazioni, guide, luoghi, autenticazione, pagine legali) con **template Django**, per la SEO. Per l'editor del viaggio vedi la **Decisione aperta D2**:
-  - **opzione A (default di questo piano, come nel piano originale):** SPA React + Vite + TypeScript servita da Django (con `django-vite`), che consuma l'API;
-  - **opzione B:** template Django + HTMX + JavaScript leggero per mappa e trascinamento.
-  I task marcati **[SPA]** si applicano solo con l'opzione A.
+- **Frontend (D2 decisa, 1/11/2026).** Pagine pubbliche (home, destinazioni, guide, luoghi, autenticazione, pagine legali) ed **editor del viaggio** con **template Django + HTMX**: le view restituiscono pagine intere o frammenti HTML (partial), che HTMX inserisce nella pagina. Il tempo reale usa l'estensione `ws` di HTMX: il consumer di Channels invia frammenti HTML.
+  - **Isola JavaScript solo per la mappa interattiva:** Leaflet o il JavaScript del provider scelto in D1, caricato solo nelle pagine con mappa. Finché D1 è aperta il provider è `mock`. L'isola legge i dati dall'API `/api/v1/` con la sessione e la policy di sempre (*Decisione proposta*).
+  - HTMX 2, la sua estensione `ws` e la libreria della mappa sono **file statici versionati** nel repository, senza Node né build (*Decisione proposta*).
+  - **React è escluso dalla Fase 1.** Si potrà riconsiderare per l'app della Fase 2, che usa l'API DRF. L'API resta il contratto unico per web e app (§4.2).
 - **Adapter mappe** in `maps/`: interfacce `PlaceProvider`, `RouteProvider`, `Geocoder` e un `MockProvider` per sviluppo e test. **Attenzione:** a differenza del piano originale, il provider reale va scelto **prima dello schema di `places`** (Decisione aperta D1), perché la licenza limita cosa si può salvare (§11, §13).
 - **Tempo reale (COL-02, §10):** Django Channels + `channels-redis`, un gruppo per viaggio. Il server è ASGI tramite `daphne`.
 - **Task asincroni:** Celery con broker Redis (worker + beat), per parser email, notifiche, cambi valuta e, in Fase 2, stato voli e cali di prezzo.
@@ -116,7 +124,7 @@ Rispetto al piano originale, `notifications` passa da B ad A e `checklists` da D
 | **D** | Prenotazioni e budget | `reservations`, `budget` | RES-01..10, BDG-01..08 |
 | **E** | Scoperta, checklist, alloggi, assistente | `guides`, `checklists`, `lodging`, `assistant` | GDE-01..09, CHK-01..04, HOT-01..07, AI-01..06 |
 
-Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'editor ([SPA] `frontend/editor/src/features/<area>/`). Le revisioni incrociate sono obbligatorie su `core/`, `trips/` (dominio condiviso) e `frontend/packages/shared/`.
+Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'editor (template e partial nella propria app, `<app>/templates/<app>/`). Le revisioni incrociate sono obbligatorie su `core/` (compresi il layout base `core/templates/` e i file statici comuni `core/static/`) e su `trips/` (dominio condiviso).
 
 ---
 
@@ -125,7 +133,7 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 | ID | Decisione | Fonte | Blocca | Raccomandazione |
 | --- | --- | --- | --- | --- |
 | **D1** | **Provider mappe e luoghi** (costi, cache consentita, qualità in Italia, embed, export verso Google Maps) | §11, §13, §18.2 | **Task 1A.3 (schema `places`)**. La Fase 0 e `maps` con mock possono partire | Decidere entro la fine della Fase 0. Documentare in `docs/adr/0001-provider-mappe.md` quali campi si possono salvare e per quanto tempo |
-| **D2** | **Editor SPA React o template Django + HTMX** | non nelle specifiche (il piano originale dice SPA) | Task 0.9 | SPA React (opzione A), se il team conosce React. Altrimenti B |
+| D2 | Editor SPA React o template Django + HTMX | non nelle specifiche (il piano originale diceva SPA) | Task 0.9 | **Decisa (Mauro Spinarelli, 1/11/2026): template Django + HTMX**, isola JavaScript solo per la mappa (Leaflet o JavaScript del provider D1). React escluso dalla Fase 1; da riconsiderare eventualmente per l'app della Fase 2 |
 | **D3** | **App nella radice del progetto Django o in `apps/`** | stato del repo | Task 0.1 | **Radice (consigliato)** |
 | D4 | Nome del prodotto e dominio | §18.1. `docs/PlaneIT.docx` propone «PlaneIT» e lo scheme `planeit://` | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local`. Il nome del docx non si adotta finché D4 non è chiusa |
 | D5 | Flutter o React Native per l'app | §18.3 | Fase 2 (app) | Fuori dal perimetro di questo piano |
@@ -290,13 +298,14 @@ daphne>=4.1
 django-allauth[socialaccount]>=65.0     # ACC-01 Google, ACC-02 recupero password — Decisione proposta
 Pillow>=10.4                            # foto profilo e copertine (ACC-03, TRP-06)
 httpx>=0.27                             # client HTTP per gli adapter esterni
-django-vite>=3.0                        # [SPA] solo con D2 = opzione A
 # Fase 2
 django-storages[s3]>=1.14               # D11
 stripe>=10.0                            # SUB-01/02
 cryptography>=43                        # cifratura dei token Gmail (ACC-06)
 djangorestframework-simplejwt>=5.3      # D12
 ```
+
+Frontend (D2): nessun pacchetto Python obbligatorio. HTMX 2, l'estensione `ws` e la libreria della mappa sono file statici versionati (§2).
 
 `requirements-dev.txt` (nuovo, *Decisione proposta*):
 
@@ -368,13 +377,6 @@ services:
     image: axllent/mailpit
     ports: ["1025:1025", "8025:8025"]
 
-  vite:                       # [SPA] solo con D2 = opzione A
-    image: node:22-alpine
-    working_dir: /app/frontend
-    volumes: [".:/app"]
-    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
-    ports: ["5173:5173"]
-
   e2e:                        # avviato solo con --profile e2e
     profiles: ["e2e"]
     image: mcr.microsoft.com/playwright/python:v1.48.0-jammy
@@ -390,7 +392,7 @@ volumes:
   postgres_data:
 ```
 
-Produzione (fuori dal compose di sviluppo, *Decisione proposta*): `daphne -b 0.0.0.0 -p 8000 WANDERLOG.asgi:application` (oppure uvicorn), `DEBUG=False`, statici serviti con un build Vite.
+Produzione (fuori dal compose di sviluppo, *Decisione proposta*): `daphne -b 0.0.0.0 -p 8000 WANDERLOG.asgi:application` (oppure uvicorn), `DEBUG=False`, statici raccolti con `collectstatic` (nessun build JavaScript).
 
 **Email in entrata in sviluppo** *(Decisione proposta)*. Mailpit raccoglie la posta SMTP, ma non la inoltra a Django. Due strade, da tenere entrambe:
 
@@ -408,7 +410,7 @@ In produzione c'è un webhook firmato del provider (D9), sempre verso lo stesso 
 DJANGO_SECRET_KEY=change-me
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1,django
-CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://localhost:5173
+CSRF_TRUSTED_ORIGINS=http://localhost:8000
 SITE_URL=http://localhost:8000
 
 # --- Database / Redis (valori di sviluppo come nel compose attuale) ---
@@ -485,7 +487,8 @@ Ogni adapter esterno (`maps`, cambi, voli, meteo, LLM, push, pagamenti) ha un'im
 | WebSocket | `channels.testing.WebsocketCommunicator` | `trips/tests/test_realtime.py` | Ogni PR |
 | Task Celery | `CELERY_TASK_ALWAYS_EAGER=True` nei test | test di ogni app | Ogni PR |
 | Parser email | fixture `.eml` di esempio, scritte dal team (niente email reali) | `reservations/tests/fixtures/emails/` | Ogni PR |
-| Contratto API | schema OpenAPI generato e confrontato con quello del repo; [SPA] client TS rigenerato senza differenze | CI | Ogni PR |
+| Viste e partial HTMX | client di test di Django, con e senza l'header `HX-Request`; policy §7 applicata dalle view | `tests/` di ogni app | Ogni PR |
+| Contratto API | schema OpenAPI generato e confrontato con quello del repo | CI | Ogni PR |
 | E2E | Playwright (pytest-playwright), servizio `e2e` del compose | `e2e/` nella radice | PR verso `main` e ogni notte |
 | Accessibilità | axe-core iniettato nei test Playwright *(Decisione proposta)* | `e2e/test_a11y.py` | PR verso `main` |
 | Prestazioni | viaggio di prova con 200 luoghi: risposta dell'API e apertura dell'editor sotto i 3 s (§12) | `e2e/test_performance.py` | Ogni notte |
@@ -515,7 +518,8 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 | --- | --- | --- |
 | Segreti | `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` letti da variabili d'ambiente (oggi sono nel codice). `DEBUG=False` di default fuori dallo sviluppo | 0 |
 | Password | Hasher Django di default (PBKDF2), *Decisione proposta:* Argon2 con `argon2-cffi`. Validatori già presenti | 0 |
-| Sessioni revocabili | Sessioni lato server. "Esci da tutti i dispositivi" nel profilo. [SPA] stessa origine con cookie di sessione e CSRF, niente token in `localStorage` | 1 |
+| Sessioni revocabili | Sessioni lato server. "Esci da tutti i dispositivi" nel profilo. Stessa origine con cookie di sessione e CSRF, niente token in `localStorage` | 1 |
+| CSRF con HTMX | Le richieste HTMX di scrittura inviano il token CSRF nell'header `X-CSRFToken` (`hx-headers` nel layout base); la mappa usa la sessione e lo stesso header verso l'API | 0 |
 | Inviti | Token casuale, salvato solo come hash, con scadenza (*Decisione proposta:* 14 giorni), monouso per gli inviti via email, revocabile | 1A |
 | Indirizzo `trip+` | Token casuale non sequenziale e rigenerabile, non l'ID del viaggio | 1B |
 | File | Nomi casuali (UUID), download solo da una view che applica la policy, URL firmati con scadenza su S3 (D11), limite `MAX_UPLOAD_MB`, controllo del tipo MIME | 1B / 2 |
@@ -541,12 +545,12 @@ i18n (§4.1 punto 6, §12, NEW-01):
 - La lingua dell'utente (`User.language`) prevale sull'header del browser. È presente un selettore di lingua (home autenticata, §3).
 - Formati di data, numero e valuta localizzati. Distanze in km o miglia secondo `User.distance_unit` (ACC-03, NEW-01).
 - Contenuti editoriali: `Guide.language` e `Destination.language`; il contenuto indica la propria lingua (§12).
-- [SPA] i18next con `it.json` ed `en.json`. CI: `makemessages` senza stringhe nuove non tradotte, `compilemessages`, e un controllo che le chiavi `it` ed `en` coincidano.
+- Template e partial tradotti con `{% translate %}` e `{% blocktranslate %}`; le poche stringhe dell'isola della mappa arrivano dal template (`json_script`). CI: `makemessages` senza stringhe nuove non tradotte e `compilemessages`.
 
 Accessibilità (§12, NEW-12):
 
 - Form etichettati, focus visibile, contrasto AA, alternative testuali (`aria-label`) per tutte le azioni a icona dell'editor.
-- Riordino accessibile da tastiera: trascinamento con alternativa da tastiera e annunci per i lettori di schermo (*Decisione proposta:* `@dnd-kit` con il sensore tastiera; per l'opzione B pulsanti "su/giù").
+- Riordino accessibile da tastiera: pulsanti "su/giù" (richieste HTMX) come alternativa al trascinamento, con annunci per i lettori di schermo in una regione `aria-live` (*Decisione proposta*). Il trascinamento di PLC-05 richiede JavaScript oltre l'isola della mappa: vedi §21.11.
 - Su mobile l'editor passa a schede (MAP-01, §9).
 - Test axe-core senza violazioni "serious" o "critical" sulle pagine dei test §15.
 
@@ -576,9 +580,6 @@ Accessibilità (§12, NEW-12):
   db.sqlite3
   media/
   staticfiles/
-  # Node / Vite [SPA]
-  node_modules/
-  dist/
   # Celery, Docker, strumenti
   celerybeat-schedule
   graphify-out/
@@ -602,7 +603,7 @@ Accessibilità (§12, NEW-12):
   Criterio: `.env` è ignorato da git; `check --deploy` non dà errori (gli avvisi di sicurezza attesi con `DEBUG=True` in sviluppo sono ammessi); la stringa `django-insecure` non è più in nessun file versionato.
 
 **0.2 Dipendenze e immagine (prima di registrare le app)**
-- Aggiornare `requirements.txt` (blocco "Fase 0" del §8; `django-vite` solo con D2 = A) e creare `requirements-dev.txt`.
+- Aggiornare `requirements.txt` (blocco "Fase 0" del §8) e creare `requirements-dev.txt`.
 - `Dockerfile` con `ARG DEV` che installa `requirements-dev.txt`; nel compose, servizio `django`, `build: { context: ., args: { DEV: "1" } }`.
 - In questo task **non** si tocca `INSTALLED_APPS`.
 - Checkpoint:
@@ -670,14 +671,15 @@ Accessibilità (§12, NEW-12):
 
 **0.8 Qualità e CI**
 - `ruff.toml` nella radice, `WANDERLOG/pytest.ini`, `WANDERLOG/.importlinter` (livelli del §6).
-- `.github/workflows/ci.yml` con i servizi `postgres:17` e `redis:7`. Passi: `ruff check`, `ruff format --check`, `lint-imports`, `manage.py check`, `makemigrations --check --dry-run`, `compilemessages`, `pytest --cov`, confronto dello schema OpenAPI. [SPA] `npm ci`, `npm run typecheck`, `npm run lint`, `npm run build`.
+- `.github/workflows/ci.yml` con i servizi `postgres:17` e `redis:7`. Passi: `ruff check`, `ruff format --check`, `lint-imports`, `manage.py check`, `makemigrations --check --dry-run`, `compilemessages`, `pytest --cov`, confronto dello schema OpenAPI.
 - Checkpoint: `docker compose exec django sh -c "ruff check .. && lint-imports && pytest -q"` esce con 0. La CI è verde sul branch.
 
-**0.9 Frontend [SPA]** (con D2 = B: template base dell'editor e asset statici)
-- `frontend/editor` (Vite + React + TS) e `frontend/packages/shared` (client API generato da OpenAPI, i18next). Integrazione con `django-vite`. Pagina `/trips/<id>/edit` con layout a due colonne (sezioni | mappa) che chiama `/api/v1/health/`.
-- Checkpoint: con `docker compose up`, `http://localhost:8000/it/trips/demo/edit` mostra il layout e carica il bundle dal server Vite. `npm run build` esce con 0.
+**0.9 Frontend: layout base, HTMX e isola della mappa** (D2 decisa: template Django + HTMX)
+- `core/templates/base.html`: layout, selettore di lingua, `hx-headers` con il token CSRF, una regione `aria-live` per gli annunci. File statici versionati di HTMX 2 e dell'estensione `ws` in `core/static/`.
+- Pagina di prova `/trips/demo/edit` con layout a due colonne (sezioni | mappa): la colonna delle sezioni carica un partial di prova con `hx-get`; il contenitore della mappa e lo script dell'isola (`maps/static/maps/`, con provider `mock`) compaiono solo in questa pagina.
+- Checkpoint: `curl -fsS http://localhost:8000/it/trips/demo/edit` risponde 200 e la pagina contiene lo script di HTMX e il contenitore della mappa. Test `core/tests/test_frontend.py` verde: il partial di prova restituisce solo il frammento quando la richiesta ha l'header `HX-Request: true`, la pagina intera altrimenti.
 
-**Checkpoint finale della Fase 0:** `docker compose up -d --build`, tutti i servizi in esecuzione; `curl -fsS http://localhost:8000/api/v1/health/` → 200; CI verde; **D1 e D2 decise** (scritte negli ADR in `docs/adr/`).
+**Checkpoint finale della Fase 0:** `docker compose up -d --build`, tutti i servizi in esecuzione; `curl -fsS http://localhost:8000/api/v1/health/` → 200; CI verde; **D1 decisa** e D2 (decisa il 1/11/2026) scritte negli ADR in `docs/adr/`.
 
 ---
 
@@ -705,8 +707,8 @@ Criteri: `create_trip(title="Roma", start=12/06, end=16/06)` crea 5 `Day`, le se
 
 Corrisponde a §14 Fase 1 e ai criteri del §15. Ogni dev chiude il proprio blocco con test e checkpoint.
 
-1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore in `localStorage`, poi `POST /api/v1/trips/import-draft/` dopo la registrazione). Email di invito (`notifications`). Pagine legali. Export JSON + allegati. Throttling. Admin per staff.
-2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-11 (vista diario di base: fermate fatte, note e percorso sulla mappa; il completo è GDE-08 in Fase 2), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi lato client che chiama l'operazione inversa via API, ogni operazione registrata in `ActivityEntry`; *Decisione proposta*, al posto dell'undo lato server del piano originale), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività).
+1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore nella sessione Django, lato server, salvata sull'account dopo la registrazione; *Decisione proposta* adattata a D2, prima era in `localStorage`; l'endpoint `POST /api/v1/trips/import-draft/` resta per l'app della Fase 2). Email di invito (`notifications`). Pagine legali. Export JSON + allegati. Throttling. Admin per staff.
+2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-11 (vista diario di base: fermate fatte, note e percorso sulla mappa; il completo è GDE-08 in Fase 2), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi per utente e viaggio tenuta sul server, che esegue l'operazione inversa tramite i servizi, ogni operazione registrata in `ActivityEntry`; *Decisione proposta* adattata a D2, che non prevede JavaScript nell'editor oltre alla mappa), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività).
 3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, §11), MAP-01..04 (vista affiancata su desktop, schede su mobile). Lo spostamento lista → giorno è un’unica operazione di `places`/`itinerary`: toglie la `ListEntry`, crea la `DayEntry` e restituisce le tratte ricalcolate. Il reload mostra il luogo nel giorno (TRP-12).
 4. **D, prenotazioni e budget:** RES-01, RES-02, RES-09; RES-03/04 (indirizzo `trip+<token>@`, `InboundEmail`, parser per fornitore in Celery, stato delle importazioni, email non riconosciute salvate come `Attachment` con avviso); BDG-01..05; **BDG-06 anticipato** (richiesto da §14 Fase 1 "budget con conversione" e §15.7; = NEW-02): tasso del giorno della spesa, modificabile, totale nella valuta del viaggio con l'importo originale visibile.
 5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide (§13).
@@ -888,7 +890,7 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 
 ## 16. Regole di collaborazione
 
-- Branch per workstream (`feat/accounts`, `feat/trips`, …), PR piccole, review incrociata obbligatoria su `core/`, `trips/` e `frontend/packages/shared/`.
+- Branch per workstream (`feat/accounts`, `feat/trips`, …), PR piccole, review incrociata obbligatoria su `core/` (layout e statici comuni) e `trips/`.
 - Convenzioni: Django 5.2, Python 3.12, ruff per lint e formattazione, pytest-django obbligatorio per ogni app, factory_boy, fixture condivise.
 - Un campo su un modello di un'altra app si chiede con una issue al proprietario. Nessuna migrazione nelle app altrui.
 - Contratto API stabile da `/api/v1/`; una modifica incompatibile richiede una nuova versione.
@@ -901,7 +903,7 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 2. **Realtime e conflitti (COL-02/03)** → un gruppo per viaggio, broadcast `on_commit`, `NoteRevision`, test WebSocket in CI.
 3. **Dominio condiviso conteso** → Fase 1A sequenziale e `lint-imports` in CI.
 4. **Integrazioni esterne** (cambi in Fase 1; Gmail, voli, alloggi, pagamenti, LLM in Fase 2) → adapter con mock, chiavi solo da `.env`.
-5. **Editor condiviso da 5 persone** [SPA] → moduli per area, componenti condivisi solo in `packages/shared`, design review settimanale.
+5. **Editor condiviso da 5 persone** → partial per area nella propria app, componenti condivisi solo in `core/templates/` (include e template tag), design review settimanale.
 6. **Prestazioni (200 luoghi in meno di 3 s)** → serializer leggeri, `prefetch_related`, mappa che non blocca l'editing, test notturno.
 7. **Email in entrata** → in sviluppo `ingest_eml` e lettura di Mailpit; in produzione dipende da D9.
 
@@ -960,7 +962,7 @@ La 2.3 elencava quattro punti in cui le specifiche v1.1 si contraddicevano. Sono
 
 ## 21. Dettagli da concordare
 
-Le dispense del corso (5-11 e 13-15) hanno incontrato dettagli che né le specifiche v1.2 né questo piano fissano. Non sono decisioni D (quelle restano al §4) e nessuno aggiunge requisiti: sono scelte tecniche che il team deve prendere prima del task indicato, per esempio in review o con un ADR (§16). Per ciascuna la colonna "Default nelle dispense" riporta la scelta usata negli esempi, valida finché il team non decide diversamente. "Nessuno" significa che le dispense non scelgono.
+Le dispense del corso (5-15) hanno incontrato dettagli che né le specifiche v1.2 né questo piano fissano. Non sono decisioni D (quelle restano al §4) e nessuno aggiunge requisiti: sono scelte tecniche che il team deve prendere prima del task indicato, per esempio in review o con un ADR (§16). Per ciascuna la colonna "Default nelle dispense" riporta la scelta usata negli esempi, valida finché il team non decide diversamente. "Nessuno" significa che le dispense non scelgono.
 
 ### 21.1 Modello dati e account
 
@@ -991,7 +993,7 @@ Le dispense del corso (5-11 e 13-15) hanno incontrato dettagli che né le specif
 | 13 | Forma degli URL annidati sotto un viaggio | `trips/{trip_pk}/days/` con il router di DRF, senza pacchetti aggiuntivi | 7 · Fase 1B |
 | 14 | Filtri di TRP-03: `django-filter` (non nel §8) o `get_queryset()`; nomi dei parametri | `get_queryset()` con `request.query_params`; nomi: nessuno | 7 · Fase 1B |
 | 15 | Formato degli errori dell'API | Nessuno (resta quello di DRF) | 7 · task 0.5 |
-| 16 | Risposta dello spostamento lista → giorno (durata, distanza, geometria, `estimate_available`) | Un'unica chiamata che restituisce le tratte ricalcolate; campi: nessuno | 7 · ITN-01, ITN-03, Fase 1B |
+| 16 | Risposta dello spostamento lista → giorno (durata, distanza, geometria, `estimate_available`) | Un'unica richiesta: con HTMX la view risponde con i partial aggiornati della lista e del giorno (tratte ricalcolate comprese); l'API offre la stessa operazione con questi campi in JSON | 7, 12 · ITN-01, ITN-03, Fase 1B |
 | 17 | File dello schema OpenAPI versionato e confrontato in CI | `docs/api/schema.yml` | 13 · task 0.8 |
 
 ### 21.4 Task asincroni
@@ -1007,9 +1009,9 @@ Le dispense del corso (5-11 e 13-15) hanno incontrato dettagli che né le specif
 
 | # | Domanda | Default nelle dispense | Dispensa · task |
 | --- | --- | --- | --- |
-| 22 | Canale delle scritture: API REST o WebSocket | API REST; il WebSocket solo per ricevere gli eventi | 9 · task 1A.5 |
-| 23 | Formato degli eventi (tipi, campi) | Messaggio `{"type": "trip.event", "payload": …}`; tipi e campi del payload: nessuno | 9 · task 1A.5 |
-| 24 | Revoca di un membro o viaggio reso privato durante una connessione aperta | Il servizio che revoca invia un evento che chiude le connessioni interessate | 9 · task 1A.5 |
+| 22 | Canale delle scritture: richieste HTTP o WebSocket | Richieste HTMX alle view Django (che chiamano gli stessi servizi dell'API); il WebSocket solo per ricevere | 9, 12 · task 1A.5 |
+| 23 | Formato degli eventi (tipi, campi) | Messaggio `{"type": "trip.event", "payload": …}` nel gruppo; il payload indica il partial da aggiornare (nome dell'URL, argomenti, id del bersaglio) e il consumer invia al browser un frammento HTML che lo ricarica; tipi: nessuno | 9, 12 · task 1A.5 |
+| 24 | Revoca di un membro o viaggio reso privato durante una connessione aperta | Il servizio che revoca invia un evento che chiude le connessioni interessate; inoltre il consumer ricontrolla `can_read` a ogni evento prima di inviare un frammento | 9, 12 · task 1A.5 |
 | 25 | Test asincroni: aggiungere `pytest-asyncio` (non nel §8) o no | No: test sincroni con `async_to_sync` | 9, 13 · task 1A.5 |
 | 26 | Timeout delle connessioni WebSocket inattive dietro il proxy | Nessuno | 15 · rilascio |
 
@@ -1073,3 +1075,16 @@ Le dispense del corso (5-11 e 13-15) hanno incontrato dettagli che né le specif
 | 60 | Chi custodisce le variabili di produzione | Solo chi gestisce il rilascio (insegnante o responsabile indicato) | 15 · Fase 1C |
 | 61 | Quote e costi del provider di mappe in produzione | Nessuno (dopo D1) | 15 · Fase 1C |
 | 62 | Chi approva i contenuti editoriali originali del seed di produzione (§13) | Nessuno | 15 · Fase 1C |
+
+### 21.11 Frontend (D2)
+
+| # | Domanda | Default nelle dispense | Dispensa · task |
+| --- | --- | --- | --- |
+| 63 | `django-htmx` (non nel §8) o controllo diretto degli header | Nessun pacchetto: `request.headers.get("HX-Request")` in una funzione di `core` | 12 · task 0.9 |
+| 64 | Trascinamento di PLC-05 e PLC-06: D2 prevede JavaScript solo per la mappa | Pulsanti "su/giù" e un form "Sposta nel giorno…" con HTMX; il trascinamento (per esempio una seconda piccola isola) va deciso | 12, 14 · Fase 1B |
+| 65 | Dati dell'isola della mappa: API DRF o endpoint JSON dedicato; formato | Endpoint dell'API in `itinerary`, `GET /api/v1/trips/{trip_pk}/map/`, GeoJSON (`FeatureCollection`) | 12 · task 1A.4, Fase 1B |
+| 66 | Mappa con provider `mock`: sfondo (tile) o no | Nessuno sfondo: solo pin e tratte; le tile arrivano con D1 | 11, 12 · task 0.9 |
+| 67 | Lingua dei frammenti inviati dal WebSocket | Quella della pagina, passata nell'URL del WebSocket (`?lang=it`) e controllata su `LANGUAGES` | 12 · task 1A.5 |
+| 68 | Schede su mobile (MAP-01) senza JavaScript | Nessuno (CSS e link, oppure richieste HTMX) | 12 · Fase 1B |
+| 69 | Annulla e ripeti lato server (TRP-12): dove si tiene la pila | Nessuno (sessione o modello) | 12 · Fase 1B |
+| 70 | Bozza del visitatore in sessione (ACC-05): durata e passaggio all'account | Nessuno | 12 · Fase 1B |
