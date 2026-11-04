@@ -13,6 +13,8 @@
 - §10: aggiunta l’app `core`, già presente nel repository (14 app);
 - versione: il documento valido è quello con l’intestazione “Versione documento”; il commit `db2b15d` (“V.1.0”) conteneva la 1.1.
 
+4 novembre 2026: aggiunte ancore per i collegamenti dal piano, nessun contenuto cambiato.
+
 Questo documento descrive cosa deve fare il prodotto. Non è un clone del marchio, dei testi, delle guide o del codice di Wanderlog. Le funzioni sono ricostruite da pagine pubbliche, help center e FAQ, e vanno reimplementate con contenuti, dati e identità propri.
 
 ---
@@ -210,32 +212,32 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| ACC-01 | P1 | Registrazione con email e password, e accesso con Google. |
-| ACC-02 | P1 | Recupero password via email. |
-| ACC-03 | P1 | Modifica nome, email, password, foto, lingua, unità, valuta. |
-| ACC-04 | P1 | Cancellazione account: i viaggi di cui si è unici proprietari vengono eliminati o trasferiti; i viaggi condivisi restano agli altri collaboratori. |
-| ACC-05 | P1 | Un visitatore crea una bozza locale. Alla registrazione la bozza viene salvata sull’account. |
-| ACC-06 | P2 | Collegamento e scollegamento di una casella Gmail, con consenso esplicito e revoca immediata. |
-| ACC-07 | P2 | Pagina profilo pubblico con viaggi e guide visibili secondo la privacy scelta. |
+| <a id="acc-01"></a>ACC-01 | P1 | Registrazione con email e password, e accesso con Google. |
+| <a id="acc-02"></a>ACC-02 | P1 | Recupero password via email. |
+| <a id="acc-03"></a>ACC-03 | P1 | Modifica nome, email, password, foto, lingua, unità, valuta. |
+| <a id="acc-04"></a>ACC-04 | P1 | Cancellazione account: i viaggi di cui si è unici proprietari vengono eliminati o trasferiti; i viaggi condivisi restano agli altri collaboratori. |
+| <a id="acc-05"></a>ACC-05 | P1 | Un visitatore crea una bozza locale. Alla registrazione la bozza viene salvata sull’account. |
+| <a id="acc-06"></a>ACC-06 | P2 | Collegamento e scollegamento di una casella Gmail, con consenso esplicito e revoca immediata. |
+| <a id="acc-07"></a>ACC-07 | P2 | Pagina profilo pubblico con viaggi e guide visibili secondo la privacy scelta. |
 
 ### 7.2 Viaggio
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| TRP-01 | P1 | Creare un viaggio con titolo, una o più destinazioni, data inizio e fine. Le date possono restare vuote. |
-| TRP-02 | P1 | Cambiare date: i giorni esistenti si spostano o si estendono senza perdere le voci; i giorni in eccesso chiedono conferma prima della cancellazione. |
-| TRP-03 | P1 | Elenco “I miei viaggi” con filtri in programma, in corso, passati, archiviati. |
-| TRP-04 | P1 | Duplicare, archiviare, eliminare un viaggio. L’eliminazione è consentita al proprietario. |
-| TRP-05 | P1 | Visibilità: privato, chiunque abbia il link, follower, pubblico. |
-| TRP-06 | P1 | Copertina automatica dalla destinazione, sostituibile. |
-| TRP-07 | P2 | Riordinare le sezioni utente. Nascondere una sezione senza cancellarla. |
-| TRP-08 | P2 | Stampa e esportazione PDF dell’itinerario dal web. |
-| TRP-09 | P2 | Indice del viaggio per saltare a un giorno o a una sezione. In viaggio, il giorno corrente è evidenziato. |
-| TRP-10 | P3 | Vista calendario del viaggio, oltre alla lista dei giorni. |
-| TRP-11 | P1 | Ogni viaggio ha due viste: piano (itinerario e budget) e diario (fermate visitate, foto, note, percorso). |
-| TRP-12 | P1 | Salvataggio automatico, con annulla e ripeti sull’editor. |
-| TRP-13 | P2 | Trasporto predefinito del viaggio: auto oppure trasporto pubblico, entrambi con camminata sulle tratte brevi. |
-| TRP-14 | P2 | Convertire il viaggio in una guida copiando luoghi e note. Il viaggio non viene cancellato. |
+| <a id="trp-01"></a>TRP-01 | P1 | Creare un viaggio con titolo, una o più destinazioni, data inizio e fine. Le date possono restare vuote. |
+| <a id="trp-02"></a>TRP-02 | P1 | Cambiare date: i giorni esistenti si spostano o si estendono senza perdere le voci; i giorni in eccesso chiedono conferma prima della cancellazione. |
+| <a id="trp-03"></a>TRP-03 | P1 | Elenco “I miei viaggi” con filtri in programma, in corso, passati, archiviati. |
+| <a id="trp-04"></a>TRP-04 | P1 | Duplicare, archiviare, eliminare un viaggio. L’eliminazione è consentita al proprietario. |
+| <a id="trp-05"></a>TRP-05 | P1 | Visibilità: privato, chiunque abbia il link, follower, pubblico. |
+| <a id="trp-06"></a>TRP-06 | P1 | Copertina automatica dalla destinazione, sostituibile. |
+| <a id="trp-07"></a>TRP-07 | P2 | Riordinare le sezioni utente. Nascondere una sezione senza cancellarla. |
+| <a id="trp-08"></a>TRP-08 | P2 | Stampa e esportazione PDF dell’itinerario dal web. |
+| <a id="trp-09"></a>TRP-09 | P2 | Indice del viaggio per saltare a un giorno o a una sezione. In viaggio, il giorno corrente è evidenziato. |
+| <a id="trp-10"></a>TRP-10 | P3 | Vista calendario del viaggio, oltre alla lista dei giorni. |
+| <a id="trp-11"></a>TRP-11 | P1 | Ogni viaggio ha due viste: piano (itinerario e budget) e diario (fermate visitate, foto, note, percorso). |
+| <a id="trp-12"></a>TRP-12 | P1 | Salvataggio automatico, con annulla e ripeti sull’editor. |
+| <a id="trp-13"></a>TRP-13 | P2 | Trasporto predefinito del viaggio: auto oppure trasporto pubblico, entrambi con camminata sulle tratte brevi. |
+| <a id="trp-14"></a>TRP-14 | P2 | Convertire il viaggio in una guida copiando luoghi e note. Il viaggio non viene cancellato. |
 
 **Criterio TRP-01.** Dato un utente sulla home, quando inserisce “Roma”, dal 12 al 16 giugno, e conferma, il sistema crea un viaggio con cinque giorni vuoti e la destinazione Roma sulla mappa.
 
@@ -243,30 +245,30 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| PLC-01 | P1 | Cercare un luogo per nome e zona e aggiungerlo a una lista o a un giorno. |
-| PLC-02 | P1 | All’aggiunta, compilare coordinate, indirizzo, foto, categoria, voto, orari e sito se il provider li fornisce. |
-| PLC-03 | P1 | Creare liste (“Da vedere”, “Ristoranti”, “Se avanza tempo”) con nome, colore e icona. |
-| PLC-04 | P1 | Nota libera su ogni voce. Foto personalizzata al posto di quella predefinita. |
-| PLC-05 | P1 | Trascinare per riordinare. Spostare o eliminare più voci insieme. |
-| PLC-06 | P1 | Spostare una voce da una lista a un giorno e viceversa. Una voce può restare in una lista e comparire anche in un giorno. |
-| PLC-07 | P2 | Suggerimenti in fondo a una lista, in base alla destinazione e ai luoghi già presenti. |
-| PLC-08 | P2 | Aggiungere un luogo personalizzato non presente nel provider (nome, coordinate o indirizzo, nota). |
-| PLC-09 | P3 | Attività senza luogo fisico (“giro in barca”), con durata e costo, posizionabile nel giorno. |
+| <a id="plc-01"></a>PLC-01 | P1 | Cercare un luogo per nome e zona e aggiungerlo a una lista o a un giorno. |
+| <a id="plc-02"></a>PLC-02 | P1 | All’aggiunta, compilare coordinate, indirizzo, foto, categoria, voto, orari e sito se il provider li fornisce. |
+| <a id="plc-03"></a>PLC-03 | P1 | Creare liste (“Da vedere”, “Ristoranti”, “Se avanza tempo”) con nome, colore e icona. |
+| <a id="plc-04"></a>PLC-04 | P1 | Nota libera su ogni voce. Foto personalizzata al posto di quella predefinita. |
+| <a id="plc-05"></a>PLC-05 | P1 | Trascinare per riordinare. Spostare o eliminare più voci insieme. |
+| <a id="plc-06"></a>PLC-06 | P1 | Spostare una voce da una lista a un giorno e viceversa. Una voce può restare in una lista e comparire anche in un giorno. |
+| <a id="plc-07"></a>PLC-07 | P2 | Suggerimenti in fondo a una lista, in base alla destinazione e ai luoghi già presenti. |
+| <a id="plc-08"></a>PLC-08 | P2 | Aggiungere un luogo personalizzato non presente nel provider (nome, coordinate o indirizzo, nota). |
+| <a id="plc-09"></a>PLC-09 | P3 | Attività senza luogo fisico (“giro in barca”), con durata e costo, posizionabile nel giorno. |
 
 ### 7.4 Itinerario
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| ITN-01 | P1 | Ogni giorno mostra le tappe in ordine, gli orari, e sotto l’intestazione il tempo di spostamento totale e la distanza totale. |
-| ITN-02 | P1 | Impostare ora di inizio e di fine su una tappa. |
-| ITN-03 | P1 | Tra due tappe mostrare mezzo, durata e distanza. Il mezzo si cambia per quella tratta. |
-| ITN-04 | P1 | Mezzi: auto, a piedi, trasporto pubblico, bici. |
-| ITN-05 | P1 | Aprire le indicazioni della tratta successiva in Google Maps o Apple Maps. |
-| ITN-06 | P1 | Vista compatta (solo nome, orario, tratta) e vista estesa (foto e nota). |
-| ITN-07 | P2 | Ottimizzare l’ordine di un giorno, al massimo 15 tappe. L’utente fissa inizio e fine, oppure accetta il suggerimento. Un avviso mostra cosa è cambiato e consente il ripristino. |
-| ITN-08 | P2 | Opzione per inserire l’alloggio del giorno come prima e ultima tappa, così le distanze partono e tornano lì. |
-| ITN-09 | P3 | Ottimizzazione che rispetta gli orari già fissati e le finestre di apertura. |
-| ITN-10 | P3 | Mezzi aggiuntivi: treno, traghetto, taxi, volo interno. |
+| <a id="itn-01"></a>ITN-01 | P1 | Ogni giorno mostra le tappe in ordine, gli orari, e sotto l’intestazione il tempo di spostamento totale e la distanza totale. |
+| <a id="itn-02"></a>ITN-02 | P1 | Impostare ora di inizio e di fine su una tappa. |
+| <a id="itn-03"></a>ITN-03 | P1 | Tra due tappe mostrare mezzo, durata e distanza. Il mezzo si cambia per quella tratta. |
+| <a id="itn-04"></a>ITN-04 | P1 | Mezzi: auto, a piedi, trasporto pubblico, bici. |
+| <a id="itn-05"></a>ITN-05 | P1 | Aprire le indicazioni della tratta successiva in Google Maps o Apple Maps. |
+| <a id="itn-06"></a>ITN-06 | P1 | Vista compatta (solo nome, orario, tratta) e vista estesa (foto e nota). |
+| <a id="itn-07"></a>ITN-07 | P2 | Ottimizzare l’ordine di un giorno, al massimo 15 tappe. L’utente fissa inizio e fine, oppure accetta il suggerimento. Un avviso mostra cosa è cambiato e consente il ripristino. |
+| <a id="itn-08"></a>ITN-08 | P2 | Opzione per inserire l’alloggio del giorno come prima e ultima tappa, così le distanze partono e tornano lì. |
+| <a id="itn-09"></a>ITN-09 | P3 | Ottimizzazione che rispetta gli orari già fissati e le finestre di apertura. |
+| <a id="itn-10"></a>ITN-10 | P3 | Mezzi aggiuntivi: treno, traghetto, taxi, volo interno. |
 
 **Criterio ITN-07.** Dato un giorno con sei luoghi e l’alloggio fissato come inizio e fine, quando l’utente chiede l’ottimizzazione, l’ordine delle tappe intermedie cambia per ridurre il tempo di viaggio e l’utente può tornare all’ordine precedente con un’azione.
 
@@ -274,28 +276,28 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| MAP-01 | P1 | Sul piano, itinerario e mappa sono visibili insieme su schermi larghi. Su mobile si passa da una scheda all’altra. |
-| MAP-02 | P1 | Ogni voce ha un pin. Il colore segue la lista o il giorno. |
-| MAP-03 | P1 | Filtrare i pin per giorno e per lista. |
-| MAP-04 | P1 | Le tappe dello stesso giorno sono collegate da una linea nell’ordine dell’itinerario. |
-| MAP-05 | P2 | Export dei luoghi di un giorno o del viaggio verso Google Maps. |
-| MAP-06 | P2 | Mappa incorporabile in una pagina esterna, in sola lettura, per una guida pubblica. |
-| MAP-07 | P3 | Layer meteo sul giorno selezionato. |
+| <a id="map-01"></a>MAP-01 | P1 | Sul piano, itinerario e mappa sono visibili insieme su schermi larghi. Su mobile si passa da una scheda all’altra. |
+| <a id="map-02"></a>MAP-02 | P1 | Ogni voce ha un pin. Il colore segue la lista o il giorno. |
+| <a id="map-03"></a>MAP-03 | P1 | Filtrare i pin per giorno e per lista. |
+| <a id="map-04"></a>MAP-04 | P1 | Le tappe dello stesso giorno sono collegate da una linea nell’ordine dell’itinerario. |
+| <a id="map-05"></a>MAP-05 | P2 | Export dei luoghi di un giorno o del viaggio verso Google Maps. |
+| <a id="map-06"></a>MAP-06 | P2 | Mappa incorporabile in una pagina esterna, in sola lettura, per una guida pubblica. |
+| <a id="map-07"></a>MAP-07 | P3 | Layer meteo sul giorno selezionato. |
 
 ### 7.6 Prenotazioni e documenti
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| RES-01 | P1 | Tipi: volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato. Il volo parte da compagnia aerea, con alternativa “inserisci a mano”. |
-| RES-02 | P1 | Il volo è modificabile nei campi numero, scali, aeroporti, data e ora. |
-| RES-03 | P1 | Ogni viaggio ha un indirizzo del tipo `trip+<id>@dominio`. L’utente lo copia dal tipo di prenotazione. Un’azione mostra lo stato delle email importate. |
-| RES-04 | P1 | Se il parser non riconosce l’email, la conserva come documento allegato e avvisa l’utente. |
-| RES-05 | P2 | Con Pro, la casella collegata viene letta solo per conferme di viaggio. L’utente vede l’elenco e può scollegare. |
-| RES-06 | P2 | Allegare file (PDF, immagini) a viaggio o prenotazione. Il piano gratuito ha un tetto di spazio; Pro lo alza. |
-| RES-07 | P2 | Spostare una prenotazione importata da un viaggio a un altro. |
-| RES-08 | P2 | Stato volo: ritardo, gate, cancellazione, con notifica ai collaboratori. |
-| RES-09 | P1 | Treno, autobus, traghetto e crociera sono tipi di prenotazione, allo stesso livello di volo e alloggio. |
-| RES-10 | P3 | Un pacchetto volo+hotel conta una sola volta nel budget. L’utente marca una prenotazione come “già inclusa”. |
+| <a id="res-01"></a>RES-01 | P1 | Tipi: volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato. Il volo parte da compagnia aerea, con alternativa “inserisci a mano”. |
+| <a id="res-02"></a>RES-02 | P1 | Il volo è modificabile nei campi numero, scali, aeroporti, data e ora. |
+| <a id="res-03"></a>RES-03 | P1 | Ogni viaggio ha un indirizzo del tipo `trip+<id>@dominio`. L’utente lo copia dal tipo di prenotazione. Un’azione mostra lo stato delle email importate. |
+| <a id="res-04"></a>RES-04 | P1 | Se il parser non riconosce l’email, la conserva come documento allegato e avvisa l’utente. |
+| <a id="res-05"></a>RES-05 | P2 | Con Pro, la casella collegata viene letta solo per conferme di viaggio. L’utente vede l’elenco e può scollegare. |
+| <a id="res-06"></a>RES-06 | P2 | Allegare file (PDF, immagini) a viaggio o prenotazione. Il piano gratuito ha un tetto di spazio; Pro lo alza. |
+| <a id="res-07"></a>RES-07 | P2 | Spostare una prenotazione importata da un viaggio a un altro. |
+| <a id="res-08"></a>RES-08 | P2 | Stato volo: ritardo, gate, cancellazione, con notifica ai collaboratori. |
+| <a id="res-09"></a>RES-09 | P1 | Treno, autobus, traghetto e crociera sono tipi di prenotazione, allo stesso livello di volo e alloggio. |
+| <a id="res-10"></a>RES-10 | P3 | Un pacchetto volo+hotel conta una sola volta nel budget. L’utente marca una prenotazione come “già inclusa”. |
 
 **Criterio RES-03.** Data un’email di conferma con numero di volo, aeroporti e orari, quando viene inoltrata all’indirizzo del viaggio, entro un minuto il volo compare nel giorno corretto con quei campi compilati.
 
@@ -303,48 +305,48 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| BDG-01 | P1 | Impostare un budget totale nella valuta del viaggio. |
-| BDG-02 | P1 | Aggiungere una spesa con importo, valuta, data opzionale e pagatore. Il pagatore iniziale è l’utente corrente. |
-| BDG-03 | P1 | Collegare la spesa a un elemento del piano (luogo o prenotazione), senza obbligo. |
-| BDG-04 | P1 | Divisione: non dividere, tutti, oppure individui. Il saldo di gruppo dice chi deve a chi. |
-| BDG-05 | P1 | Totali: speso, restante rispetto al budget, ripartizione per categoria. |
-| BDG-06 | P2 | Convertire ogni spesa nella valuta del viaggio con un tasso del giorno della spesa, modificabile. Il totale è nella valuta di riferimento e mostra anche l’originale. |
-| BDG-07 | P2 | Le prenotazioni con prezzo possono generare una spesa proposta. L’utente conferma, così un importo non entra due volte. |
-| BDG-08 | P3 | Esportazione CSV delle spese. |
+| <a id="bdg-01"></a>BDG-01 | P1 | Impostare un budget totale nella valuta del viaggio. |
+| <a id="bdg-02"></a>BDG-02 | P1 | Aggiungere una spesa con importo, valuta, data opzionale e pagatore. Il pagatore iniziale è l’utente corrente. |
+| <a id="bdg-03"></a>BDG-03 | P1 | Collegare la spesa a un elemento del piano (luogo o prenotazione), senza obbligo. |
+| <a id="bdg-04"></a>BDG-04 | P1 | Divisione: non dividere, tutti, oppure individui. Il saldo di gruppo dice chi deve a chi. |
+| <a id="bdg-05"></a>BDG-05 | P1 | Totali: speso, restante rispetto al budget, ripartizione per categoria. |
+| <a id="bdg-06"></a>BDG-06 | P2 | Convertire ogni spesa nella valuta del viaggio con un tasso del giorno della spesa, modificabile. Il totale è nella valuta di riferimento e mostra anche l’originale. |
+| <a id="bdg-07"></a>BDG-07 | P2 | Le prenotazioni con prezzo possono generare una spesa proposta. L’utente conferma, così un importo non entra due volte. |
+| <a id="bdg-08"></a>BDG-08 | P3 | Esportazione CSV delle spese. |
 
 ### 7.8 Checklist
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| CHK-01 | P1 | Creare liste di bagaglio, cose da fare e acquisti, con voci spuntabili. |
-| CHK-02 | P1 | Modelli di bagaglio per tipologia di viaggio (città, mare, montagna, bambino). L’utente li copia e li modifica. |
-| CHK-03 | P2 | Assegnare una voce a un compagno. |
-| CHK-04 | P2 | L’assistente propone una lista a partire da destinazione, durata e mezzi, e l’utente la accetta in blocco o voce per voce. |
+| <a id="chk-01"></a>CHK-01 | P1 | Creare liste di bagaglio, cose da fare e acquisti, con voci spuntabili. |
+| <a id="chk-02"></a>CHK-02 | P1 | Modelli di bagaglio per tipologia di viaggio (città, mare, montagna, bambino). L’utente li copia e li modifica. |
+| <a id="chk-03"></a>CHK-03 | P2 | Assegnare una voce a un compagno. |
+| <a id="chk-04"></a>CHK-04 | P2 | L’assistente propone una lista a partire da destinazione, durata e mezzi, e l’utente la accetta in blocco o voce per voce. |
 
 ### 7.9 Collaborazione
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| COL-01 | P1 | Il proprietario invita via email o link con ruolo modifica o lettura. Può revocare o cambiare ruolo. |
-| COL-02 | P1 | Le modifiche di testo, ordine e nuove voci si propagano agli altri aperti sul piano entro pochi secondi. |
-| COL-03 | P1 | Due modifiche concorrenti sulla stessa nota non si perdono in silenzio: vince l’ultima salvata e l’altra resta recuperabile nell’attività recente. |
-| COL-04 | P1 | Registro attività: chi ha aggiunto, spostato o cancellato, con orario. |
-| COL-05 | P2 | Commento su una voce, visibile ai collaboratori. |
-| COL-06 | P3 | Voto sui luoghi in una lista (“sì”, “forse”, “no”) per decidere in gruppo. |
+| <a id="col-01"></a>COL-01 | P1 | Il proprietario invita via email o link con ruolo modifica o lettura. Può revocare o cambiare ruolo. |
+| <a id="col-02"></a>COL-02 | P1 | Le modifiche di testo, ordine e nuove voci si propagano agli altri aperti sul piano entro pochi secondi. |
+| <a id="col-03"></a>COL-03 | P1 | Due modifiche concorrenti sulla stessa nota non si perdono in silenzio: vince l’ultima salvata e l’altra resta recuperabile nell’attività recente. |
+| <a id="col-04"></a>COL-04 | P1 | Registro attività: chi ha aggiunto, spostato o cancellato, con orario. |
+| <a id="col-05"></a>COL-05 | P2 | Commento su una voce, visibile ai collaboratori. |
+| <a id="col-06"></a>COL-06 | P3 | Voto sui luoghi in una lista (“sì”, “forse”, “no”) per decidere in gruppo. |
 
 ### 7.10 Guide e scoperta
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| GDE-01 | P1 | Pagine destinazione: descrizione, attrazioni, categorie, itinerari collegati, road trip in partenza, luoghi vicini. |
-| GDE-02 | P1 | Scheda luogo pubblica: foto, categoria, descrizione, voto, estratti recensioni attribuite alla fonte, link al sito. |
-| GDE-03 | P1 | Guida o itinerario editoriale con giorni, testo e luoghi. Da ogni luogo, “Aggiungi al viaggio” sulla lista o sul giorno scelto. |
-| GDE-04 | P1 | Ricerca guide per destinazione, durata e tema. |
-| GDE-05 | P2 | Un utente pubblica una guida. Resta in bozza finché lo staff non la approva, oppure è subito visibile come contenuto della community con segnalazione. |
-| GDE-06 | P2 | Domande e risposte sulla destinazione, con moderazione. |
-| GDE-07 | P2 | Medie climatiche mensili sulla destinazione. |
-| GDE-08 | P2 | Diario di viaggio collegato al piano: riepilogo, copertina, fermate con foto e note, linee del percorso, mappa anche satellitare, condivisione propria. La privacy del diario è indipendente nel pannello, con le stesse quattro scelte del piano (TRP-05). |
-| GDE-09 | P3 | Guide scaricabili per la lettura offline nell’app. |
+| <a id="gde-01"></a>GDE-01 | P1 | Pagine destinazione: descrizione, attrazioni, categorie, itinerari collegati, road trip in partenza, luoghi vicini. |
+| <a id="gde-02"></a>GDE-02 | P1 | Scheda luogo pubblica: foto, categoria, descrizione, voto, estratti recensioni attribuite alla fonte, link al sito. |
+| <a id="gde-03"></a>GDE-03 | P1 | Guida o itinerario editoriale con giorni, testo e luoghi. Da ogni luogo, “Aggiungi al viaggio” sulla lista o sul giorno scelto. |
+| <a id="gde-04"></a>GDE-04 | P1 | Ricerca guide per destinazione, durata e tema. |
+| <a id="gde-05"></a>GDE-05 | P2 | Un utente pubblica una guida. Resta in bozza finché lo staff non la approva, oppure è subito visibile come contenuto della community con segnalazione. |
+| <a id="gde-06"></a>GDE-06 | P2 | Domande e risposte sulla destinazione, con moderazione. |
+| <a id="gde-07"></a>GDE-07 | P2 | Medie climatiche mensili sulla destinazione. |
+| <a id="gde-08"></a>GDE-08 | P2 | Diario di viaggio collegato al piano: riepilogo, copertina, fermate con foto e note, linee del percorso, mappa anche satellitare, condivisione propria. La privacy del diario è indipendente nel pannello, con le stesse quattro scelte del piano (TRP-05). |
+| <a id="gde-09"></a>GDE-09 | P3 | Guide scaricabili per la lettura offline nell’app. |
 
 **Criterio GDE-03.** Dato un itinerario pubblico e un viaggio aperto dell’utente, quando preme “Aggiungi” su un luogo e sceglie il giorno 2, quel luogo compare nel giorno 2 e sulla mappa del suo viaggio.
 
@@ -352,42 +354,42 @@ Gli identificatori servono per backlog e test. Priorità: **P1** indispensabile 
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| HOT-01 | P2 | Ricerca alloggi per destinazione, date e ospiti, con risultati di più fornitori. |
-| HOT-02 | P2 | Ordinamento per prezzo totale o per voto, dichiarato in interfaccia. La posizione in elenco non dipende da una commissione di visibilità. |
-| HOT-03 | P2 | Il prezzo mostrato include le tasse note. Se un fornitore non le espone, l’interfaccia lo dice. |
-| HOT-04 | P2 | Salvare un alloggio nel viaggio come candidato o come prenotazione. |
-| HOT-05 | P2 | Avviso se il prezzo di un alloggio osservato scende, entro una soglia scelta. |
-| HOT-06 | P2 | Il clic verso il fornitore è tracciato per l’eventuale affiliazione. La prenotazione avviene sul sito del fornitore. |
-| HOT-07 | P3 | Confronto voli e noleggi, con gli stessi principi di trasparenza. |
+| <a id="hot-01"></a>HOT-01 | P2 | Ricerca alloggi per destinazione, date e ospiti, con risultati di più fornitori. |
+| <a id="hot-02"></a>HOT-02 | P2 | Ordinamento per prezzo totale o per voto, dichiarato in interfaccia. La posizione in elenco non dipende da una commissione di visibilità. |
+| <a id="hot-03"></a>HOT-03 | P2 | Il prezzo mostrato include le tasse note. Se un fornitore non le espone, l’interfaccia lo dice. |
+| <a id="hot-04"></a>HOT-04 | P2 | Salvare un alloggio nel viaggio come candidato o come prenotazione. |
+| <a id="hot-05"></a>HOT-05 | P2 | Avviso se il prezzo di un alloggio osservato scende, entro una soglia scelta. |
+| <a id="hot-06"></a>HOT-06 | P2 | Il clic verso il fornitore è tracciato per l’eventuale affiliazione. La prenotazione avviene sul sito del fornitore. |
+| <a id="hot-07"></a>HOT-07 | P3 | Confronto voli e noleggi, con gli stessi principi di trasparenza. |
 
 ### 7.12 Assistente
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| AI-01 | P2 | Nel viaggio, una chat risponde su destinazione, spostamenti e vincoli del piano già inserito. |
-| AI-02 | P2 | Proporre luoghi e ristoranti. L’utente aggiunge un suggerimento a un giorno con un’azione esplicita. Nessun suggerimento entra nel piano da solo. |
-| AI-03 | P2 | Compilare una bozza di giorni vuoti con luoghi noti della destinazione. L’utente conferma prima della scrittura. |
-| AI-04 | P2 | Tradurre una nota o una descrizione nella lingua dell’interfaccia. |
-| AI-05 | P2 | Il piano gratuito include una quota (su Wanderlog: 10 messaggi). Pro toglie il tetto. Ogni risposta mostra che il testo può essere inaccurato. Si può allegare un file e aprire una chat nuova. |
-| AI-06 | P3 | Rispettare profilo del gruppo: ritmo, budget, accesso disabili, presenza di bambini, interessi. |
+| <a id="ai-01"></a>AI-01 | P2 | Nel viaggio, una chat risponde su destinazione, spostamenti e vincoli del piano già inserito. |
+| <a id="ai-02"></a>AI-02 | P2 | Proporre luoghi e ristoranti. L’utente aggiunge un suggerimento a un giorno con un’azione esplicita. Nessun suggerimento entra nel piano da solo. |
+| <a id="ai-03"></a>AI-03 | P2 | Compilare una bozza di giorni vuoti con luoghi noti della destinazione. L’utente conferma prima della scrittura. |
+| <a id="ai-04"></a>AI-04 | P2 | Tradurre una nota o una descrizione nella lingua dell’interfaccia. |
+| <a id="ai-05"></a>AI-05 | P2 | Il piano gratuito include una quota (su Wanderlog: 10 messaggi). Pro toglie il tetto. Ogni risposta mostra che il testo può essere inaccurato. Si può allegare un file e aprire una chat nuova. |
+| <a id="ai-06"></a>AI-06 | P3 | Rispettare profilo del gruppo: ritmo, budget, accesso disabili, presenza di bambini, interessi. |
 
 ### 7.13 Offline, notifiche, estensione
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| OFF-01 | P2 | L’app scarica un viaggio scelto: giorni, note, prenotazioni, allegati già scaricati, pin. Resta leggibile senza rete. |
-| OFF-02 | P2 | Le modifiche offline si accodano e si sincronizzano al ritorno della rete. I conflitti seguono COL-03. |
-| OFF-03 | P2 | Notifiche: invito, commento, stato volo, calo prezzo, promemoria di una tappa con orario. |
-| EXT-01 | P3 | L’estensione, su una pagina web, cerca il testo selezionato come luogo e lo salva nel viaggio scelto. |
-| EXT-02 | P3 | Su una pagina di annunci di alloggi supportata, mostra il totale con costi obbligatori quando la pagina lo consente. |
+| <a id="off-01"></a>OFF-01 | P2 | L’app scarica un viaggio scelto: giorni, note, prenotazioni, allegati già scaricati, pin. Resta leggibile senza rete. |
+| <a id="off-02"></a>OFF-02 | P2 | Le modifiche offline si accodano e si sincronizzano al ritorno della rete. I conflitti seguono COL-03. |
+| <a id="off-03"></a>OFF-03 | P2 | Notifiche: invito, commento, stato volo, calo prezzo, promemoria di una tappa con orario. |
+| <a id="ext-01"></a>EXT-01 | P3 | L’estensione, su una pagina web, cerca il testo selezionato come luogo e lo salva nel viaggio scelto. |
+| <a id="ext-02"></a>EXT-02 | P3 | Su una pagina di annunci di alloggi supportata, mostra il totale con costi obbligatori quando la pagina lo consente. |
 
 ### 7.14 Abbonamento
 
 | ID | Priorità | Requisito |
 | --- | --- | --- |
-| SUB-01 | P2 | Piani: gratuito e Pro. Riferimento osservato sul web: prova 7 giorni, poi 39,99 USD/anno, rinnovo automatico, disdetta almeno 24 ore prima dalla pagina account. Il mensile resta un’estensione nostra. |
-| SUB-02 | P2 | Gestione da account: stato, rinnovo, disdetta. La disdetta mantiene Pro fino a fine periodo pagato. |
-| SUB-03 | P2 | Il server applica i limiti. Nascondere un pulsante non è il controllo. |
+| <a id="sub-01"></a>SUB-01 | P2 | Piani: gratuito e Pro. Riferimento osservato sul web: prova 7 giorni, poi 39,99 USD/anno, rinnovo automatico, disdetta almeno 24 ore prima dalla pagina account. Il mensile resta un’estensione nostra. |
+| <a id="sub-02"></a>SUB-02 | P2 | Gestione da account: stato, rinnovo, disdetta. La disdetta mantiene Pro fino a fine periodo pagato. |
+| <a id="sub-03"></a>SUB-03 | P2 | Il server applica i limiti. Nascondere un pulsante non è il controllo. |
 
 Funzioni gratuite, senza tetto sul numero di viaggi o di compagni:
 
@@ -418,18 +420,18 @@ Queste funzioni non sono una copia: rispondono ai vuoti osservati e al contesto 
 
 | ID | Requisito |
 | --- | --- |
-| NEW-01 | Scelta esplicita di km o miglia nel profilo. L’interfaccia italiana e inglese è parità, non un’aggiunta: Wanderlog ha già il cambio lingua. |
-| NEW-02 | Totale di budget che converte spese in valute diverse (BDG-06). La valuta per singola spesa c’è già. |
-| NEW-03 | Bici come mezzo di tratta (ITN-04), oltre ai preset auto e trasporto pubblico. |
-| NEW-04 | Campi treno, bus e traghetto utili in Italia e in Europa: codice prenotazione, stazione, carrozza, posto. Il tipo di prenotazione è già parità (RES-09). |
-| NEW-05 | Nessun doppio conteggio dei pacchetti (RES-10, BDG-07). |
-| NEW-06 | Meteo previsto sui giorni del viaggio, non solo la media storica della destinazione. |
-| NEW-07 | Vista calendario (TRP-10). |
-| NEW-08 | Attività senza POI (PLC-09). |
-| NEW-09 | Piano Pro mensile oltre all’annuale (SUB-01). |
-| NEW-10 | Voto di gruppo sui luoghi (COL-06). |
-| NEW-11 | Giorno corrente in evidenza durante il viaggio (TRP-09). |
-| NEW-12 | Accessibilità: contrasto, tastiera sull’editor web, etichette per lettori di schermo sulle azioni di riordino. |
+| <a id="new-01"></a>NEW-01 | Scelta esplicita di km o miglia nel profilo. L’interfaccia italiana e inglese è parità, non un’aggiunta: Wanderlog ha già il cambio lingua. |
+| <a id="new-02"></a>NEW-02 | Totale di budget che converte spese in valute diverse (BDG-06). La valuta per singola spesa c’è già. |
+| <a id="new-03"></a>NEW-03 | Bici come mezzo di tratta (ITN-04), oltre ai preset auto e trasporto pubblico. |
+| <a id="new-04"></a>NEW-04 | Campi treno, bus e traghetto utili in Italia e in Europa: codice prenotazione, stazione, carrozza, posto. Il tipo di prenotazione è già parità (RES-09). |
+| <a id="new-05"></a>NEW-05 | Nessun doppio conteggio dei pacchetti (RES-10, BDG-07). |
+| <a id="new-06"></a>NEW-06 | Meteo previsto sui giorni del viaggio, non solo la media storica della destinazione. |
+| <a id="new-07"></a>NEW-07 | Vista calendario (TRP-10). |
+| <a id="new-08"></a>NEW-08 | Attività senza POI (PLC-09). |
+| <a id="new-09"></a>NEW-09 | Piano Pro mensile oltre all’annuale (SUB-01). |
+| <a id="new-10"></a>NEW-10 | Voto di gruppo sui luoghi (COL-06). |
+| <a id="new-11"></a>NEW-11 | Giorno corrente in evidenza durante il viaggio (TRP-09). |
+| <a id="new-12"></a>NEW-12 | Accessibilità: contrasto, tastiera sull’editor web, etichette per lettori di schermo sulle azioni di riordino. |
 
 ## 8. Flussi principali
 
@@ -576,15 +578,15 @@ Calendario, treni e traghetti strutturati, voti di gruppo, meteo sul giorno, att
 
 Il primo rilascio web è accettato quando un utente riesce, senza assistenza, a:
 
-1. creare un viaggio di cinque giorni su una città;
-2. aggiungere almeno dieci luoghi da ricerca e da una guida;
-3. distribuirli sui giorni, mettere orari e vedere tempi e distanze;
-4. vedere gli stessi luoghi sulla mappa, filtrati per giorno;
-5. invitare un’altra persona che modifica il piano e vede l’aggiornamento;
-6. inserire un volo a mano e un volo da email di prova;
-7. impostare un budget, registrare spese in due valute e leggere il totale convertito e il saldo tra i due;
-8. spuntare una checklist di bagaglio;
-9. riaprire il viaggio da un altro browser con lo stesso account e trovare i dati integri.
+1. <a id="s15-1"></a>creare un viaggio di cinque giorni su una città;
+2. <a id="s15-2"></a>aggiungere almeno dieci luoghi da ricerca e da una guida;
+3. <a id="s15-3"></a>distribuirli sui giorni, mettere orari e vedere tempi e distanze;
+4. <a id="s15-4"></a>vedere gli stessi luoghi sulla mappa, filtrati per giorno;
+5. <a id="s15-5"></a>invitare un’altra persona che modifica il piano e vede l’aggiornamento;
+6. <a id="s15-6"></a>inserire un volo a mano e un volo da email di prova;
+7. <a id="s15-7"></a>impostare un budget, registrare spese in due valute e leggere il totale convertito e il saldo tra i due;
+8. <a id="s15-8"></a>spuntare una checklist di bagaglio;
+9. <a id="s15-9"></a>riaprire il viaggio da un altro browser con lo stesso account e trovare i dati integri.
 
 ## 16. Fuori ambito della prima versione
 
@@ -608,9 +610,9 @@ Il primo rilascio web è accettato quando un utente riesce, senza assistenza, a:
 
 ## 18. Decisioni ancora aperte
 
-1. Nome del prodotto e dominio.
-2. Provider mappe (costi, cache dei luoghi, qualità in Italia).
-3. Flutter o React Native per l’app.
-4. Se le guide della community sono visibili subito o dopo moderazione.
-5. Listino Pro nostro. Il riferimento web di Wanderlog, il 7 ottobre 2026, è 39,99 USD/anno dopo 7 giorni di prova, solo annuale.
-6. Quali affiliati alloggi attivare al lancio.
+1. <a id="s18-1"></a>Nome del prodotto e dominio.
+2. <a id="s18-2"></a>Provider mappe (costi, cache dei luoghi, qualità in Italia).
+3. <a id="s18-3"></a>Flutter o React Native per l’app.
+4. <a id="s18-4"></a>Se le guide della community sono visibili subito o dopo moderazione.
+5. <a id="s18-5"></a>Listino Pro nostro. Il riferimento web di Wanderlog, il 7 ottobre 2026, è 39,99 USD/anno dopo 7 giorni di prova, solo annuale.
+6. <a id="s18-6"></a>Quali affiliati alloggi attivare al lancio.
