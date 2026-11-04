@@ -1,9 +1,12 @@
 # Piano di implementazione — WANDERLOG (Django)
 
-**Versione:** 2.7 (revisione del `plan.md` generato da GitHub Copilot)
+**Versione:** 2.8 (revisione del `plan.md` generato da GitHub Copilot)
 **Base:** [specifiche funzionali v1.2](specifiche-funzionali.md) (1 novembre 2026)
+**Riferimenti:** «spec §N» indica la sezione N delle specifiche funzionali; «§N» da solo indica una sezione di questo piano.
 **Destinatario:** team di 5 persone e GitHub Copilot in modalità Agent
-**Data:** 1 novembre 2026
+**Data:** 4 novembre 2026
+
+**Changelog 2.8 (4 novembre 2026).** Nessun requisito nuovo e nessun task cambiato. Ogni riferimento «§» dice a quale documento rimanda: «spec §N» per le specifiche funzionali, con un link alla sezione; «§N» da solo per questo piano. Aggiunta una nota sulla colonna "Fonte" del §4.
 
 **Changelog 2.7 (1 novembre 2026).** Nessun requisito nuovo. Si chiariscono i proprietari dei requisiti, approvato da Mauro Spinarelli il 1/11/2026, con una regola: **ogni requisito appartiene al workstream che possiede l'app in cui vive il suo codice** (§3).
 
@@ -49,7 +52,7 @@ La 2.2 confronta [PlaneIT.docx](PlaneIT.docx) con questo piano. Quel file non so
 
 Convenzioni del documento:
 
-- Gli ID tra parentesi (ACC-01, TRP-05, …) e i riferimenti `§n` rimandano alle specifiche. Non ci sono requisiti inventati.
+- Gli ID tra parentesi (ACC-01, TRP-05, …) e i riferimenti `spec §n` rimandano alle specifiche. Non ci sono requisiti inventati.
 - Le scelte tecniche che non vengono dalle specifiche sono marcate **Decisione proposta**. Si possono cambiare, ma vanno cambiate qui prima di scrivere codice.
 - Le scelte che bloccano una fase sono marcate **Decisione aperta Dn** (elenco completo al §4).
 - I percorsi sono relativi alla **radice del repository** `WANDERLOG/` (la cartella che contiene `compose.yaml`).
@@ -103,21 +106,21 @@ Cosa manca oggi e va sistemato nella Fase 0:
 
 **Decisione aperta D3 (raccomandazione: confermare).** Le app restano **nella radice del progetto Django** (`WANDERLOG/<app>/`), come sono oggi. Il piano di Copilot proponeva `apps/` + `config/settings/` divisi: questo piano **non** li adotta. Spostarle costerebbe un refactoring senza benefici funzionali, mentre `settings.py` unico, letto da variabili d'ambiente, basta. Se il team vuole comunque `apps/`, lo spostamento va fatto nel task 0.1, prima di qualsiasi migrazione.
 
-**Decisione proposta.** Non creare un'app `web` (presente nel piano di Copilot, non nelle specifiche §10): le pagine pubbliche generiche (home, pagine legali) vanno in `core`, quelle di destinazioni e guide in `guides`.
+**Decisione proposta.** Non creare un'app `web` (presente nel piano di Copilot, non in [spec §10](specifiche-funzionali.md#10-architettura-funzionale-django)): le pagine pubbliche generiche (home, pagine legali) vanno in `core`, quelle di destinazioni e guide in `guides`.
 
 ---
 
 ## 2. Approccio generale (confermato dal piano originale, con correzioni)
 
-- **Monolite Django modulare.** Un'API REST unica per web e futura app (§4.2): `/api/v1/` con Django REST Framework e drf-spectacular (OpenAPI). *Decisione proposta.*
+- **Monolite Django modulare.** Un'API REST unica per web e futura app ([spec §4.2](specifiche-funzionali.md#42-canali)): `/api/v1/` con Django REST Framework e drf-spectacular (OpenAPI). *Decisione proposta.*
 - **Frontend (D2 decisa, 1/11/2026).** Pagine pubbliche (home, destinazioni, guide, luoghi, autenticazione, pagine legali) ed **editor del viaggio** con **template Django + HTMX**: le view restituiscono pagine intere o frammenti HTML (partial), che HTMX inserisce nella pagina. Il tempo reale usa l'estensione `ws` di HTMX: il consumer di Channels invia frammenti HTML.
   - **Isola JavaScript solo per la mappa interattiva:** Leaflet o il JavaScript del provider scelto in D1, caricato solo nelle pagine con mappa. Finché D1 è aperta il provider è `mock`. L'isola legge i dati dall'API `/api/v1/` con la sessione e la policy di sempre (*Decisione proposta*).
   - HTMX 2, la sua estensione `ws` e la libreria della mappa sono **file statici versionati** nel repository, senza Node né build (*Decisione proposta*).
-  - **React è escluso dalla Fase 1.** Si potrà riconsiderare per l'app della Fase 2, che usa l'API DRF. L'API resta il contratto unico per web e app (§4.2).
-- **Adapter mappe** in `maps/`: interfacce `PlaceProvider`, `RouteProvider`, `Geocoder` e un `MockProvider` per sviluppo e test. **Attenzione:** a differenza del piano originale, il provider reale va scelto **prima dello schema di `places`** (Decisione aperta D1), perché la licenza limita cosa si può salvare (§11, §13).
-- **Tempo reale (COL-02, §10):** Django Channels + `channels-redis`, un gruppo per viaggio. Il server è ASGI tramite `daphne`.
+  - **React è escluso dalla Fase 1.** Si potrà riconsiderare per l'app della Fase 2, che usa l'API DRF. L'API resta il contratto unico per web e app ([spec §4.2](specifiche-funzionali.md#42-canali)).
+- **Adapter mappe** in `maps/`: interfacce `PlaceProvider`, `RouteProvider`, `Geocoder` e un `MockProvider` per sviluppo e test. **Attenzione:** a differenza del piano originale, il provider reale va scelto **prima dello schema di `places`** (Decisione aperta D1), perché la licenza limita cosa si può salvare ([spec §11](specifiche-funzionali.md#11-integrazioni), [spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)).
+- **Tempo reale (COL-02, [spec §10](specifiche-funzionali.md#10-architettura-funzionale-django)):** Django Channels + `channels-redis`, un gruppo per viaggio. Il server è ASGI tramite `daphne`.
 - **Task asincroni:** Celery con broker Redis (worker + beat), per parser email, notifiche, cambi valuta e, in Fase 2, stato voli e cali di prezzo.
-- **i18n:** italiano e inglese dalla Fase 0 (§4.1 punto 6, §12).
+- **i18n:** italiano e inglese dalla Fase 0 ([spec §4.1](specifiche-funzionali.md#41-principi) punto 6, [spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)).
 - **Ambiente di sviluppo:** Docker Compose (già presente, da estendere al §9).
 
 ---
@@ -149,32 +152,34 @@ Ogni dev possiede modelli, serializer, view, URL, test e la propria parte dell'e
 
 ## 4. Decisioni aperte
 
+Nella colonna "Fonte", «spec §N» è la sezione N delle specifiche funzionali v1.2; «spec §18.N» è il punto N dell'elenco "Decisioni ancora aperte" (spec §18).
+
 | ID | Decisione | Fonte | Blocca | Raccomandazione |
 | --- | --- | --- | --- | --- |
-| **D1** | **Provider mappe e luoghi** (costi, cache consentita, qualità in Italia, embed, export verso Google Maps) | §11, §13, §18.2 | **Task 1A.3 (schema `places`)**. La Fase 0 e `maps` con mock possono partire | Decidere entro la fine della Fase 0. Documentare in `docs/adr/0001-provider-mappe.md` quali campi si possono salvare e per quanto tempo |
+| **D1** | **Provider mappe e luoghi** (costi, cache consentita, qualità in Italia, embed, export verso Google Maps) | [spec §11](specifiche-funzionali.md#11-integrazioni), [spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto), [spec §18.2](specifiche-funzionali.md#18-decisioni-ancora-aperte) | **Task 1A.3 (schema `places`)**. La Fase 0 e `maps` con mock possono partire | Decidere entro la fine della Fase 0. Documentare in `docs/adr/0001-provider-mappe.md` quali campi si possono salvare e per quanto tempo |
 | D2 | Editor SPA React o template Django + HTMX | non nelle specifiche (il piano originale diceva SPA) | Task 0.9 | **Decisa (Mauro Spinarelli, 1/11/2026): template Django + HTMX**, isola JavaScript solo per la mappa (Leaflet o JavaScript del provider D1). React escluso dalla Fase 1; da riconsiderare eventualmente per l'app della Fase 2 |
 | **D3** | **App nella radice del progetto Django o in `apps/`** | stato del repo | Task 0.1 | **Radice (consigliato)** |
-| D4 | Nome del prodotto e dominio | §18.1. `docs/PlaneIT.docx` propone «PlaneIT» e lo scheme `planeit://` | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local`. Il nome del docx non si adotta finché D4 non è chiusa |
-| D5 | Flutter o React Native per l'app | §18.3 | Fase 2 (app) | Fuori dal perimetro di questo piano |
-| D6 | Guide della community visibili subito o dopo moderazione | §18.4, GDE-05 | Fase 2 | — |
-| D7 | Listino Pro (riferimento: 39,99 USD/anno, prova di 7 giorni; mensile come estensione) | §18.5, SUB-01, NEW-09 | Fase 2 | — |
-| D8 | Affiliati alloggi da attivare al lancio | §18.6, HOT-06 | Fase 2 | — |
-| D9 | Servizio di email in entrata in produzione (webhook) | §11 "Email in entrata" | Rilascio della Fase 1 | *Decisione proposta:* un provider con webhook firmato |
-| D10 | Provider di meteo, stato voli, tassi di cambio, LLM, push | §11 | Cambi: Fase 1 (BDG-06). Gli altri: Fase 2/3 | Ogni provider sta dietro un adapter con mock |
-| D11 | Storage dei file in produzione | §12 (file privati) | Fase 2 (RES-06) | *Decisione proposta:* S3-compatibile con URL firmati |
-| D12 | Autenticazione dell'app mobile (token DRF o JWT) | §4.2. Il flusso auth di `docs/PlaneIT.docx` non è la specifica web | Fase 2 | *Decisione proposta:* JWT (`djangorestframework-simplejwt`) solo per l'app. Il web resta sessione e allauth (ACC-01): niente username obbligatorio, data di nascita, OTP, né `POST /api/v1/auth/login` |
-| D13 | Significato di "racconti" (§10 `guides`, §14 Fase 3) rispetto al diario (GDE-08) | §10, §14 | Fase 3 | Chiarire con chi ha scritto le specifiche |
+| D4 | Nome del prodotto e dominio | [spec §18.1](specifiche-funzionali.md#18-decisioni-ancora-aperte). `docs/PlaneIT.docx` propone «PlaneIT» e lo scheme `planeit://` | Indirizzo `trip+…@dominio` in produzione (RES-03), pagine legali | In sviluppo si usa `wanderlog.local`. Il nome del docx non si adotta finché D4 non è chiusa |
+| D5 | Flutter o React Native per l'app | [spec §18.3](specifiche-funzionali.md#18-decisioni-ancora-aperte) | Fase 2 (app) | Fuori dal perimetro di questo piano |
+| D6 | Guide della community visibili subito o dopo moderazione | [spec §18.4](specifiche-funzionali.md#18-decisioni-ancora-aperte), GDE-05 | Fase 2 | — |
+| D7 | Listino Pro (riferimento: 39,99 USD/anno, prova di 7 giorni; mensile come estensione) | [spec §18.5](specifiche-funzionali.md#18-decisioni-ancora-aperte), SUB-01, NEW-09 | Fase 2 | — |
+| D8 | Affiliati alloggi da attivare al lancio | [spec §18.6](specifiche-funzionali.md#18-decisioni-ancora-aperte), HOT-06 | Fase 2 | — |
+| D9 | Servizio di email in entrata in produzione (webhook) | [spec §11](specifiche-funzionali.md#11-integrazioni) "Email in entrata" | Rilascio della Fase 1 | *Decisione proposta:* un provider con webhook firmato |
+| D10 | Provider di meteo, stato voli, tassi di cambio, LLM, push | [spec §11](specifiche-funzionali.md#11-integrazioni) | Cambi: Fase 1 (BDG-06). Gli altri: Fase 2/3 | Ogni provider sta dietro un adapter con mock |
+| D11 | Storage dei file in produzione | [spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali) (file privati) | Fase 2 (RES-06) | *Decisione proposta:* S3-compatibile con URL firmati |
+| D12 | Autenticazione dell'app mobile (token DRF o JWT) | [spec §4.2](specifiche-funzionali.md#42-canali). Il flusso auth di `docs/PlaneIT.docx` non è la specifica web | Fase 2 | *Decisione proposta:* JWT (`djangorestframework-simplejwt`) solo per l'app. Il web resta sessione e allauth (ACC-01): niente username obbligatorio, data di nascita, OTP, né `POST /api/v1/auth/login` |
+| D13 | Significato di "racconti" ([spec §10](specifiche-funzionali.md#10-architettura-funzionale-django) `guides`, [spec §14](specifiche-funzionali.md#14-roadmap) Fase 3) rispetto al diario (GDE-08) | [spec §10](specifiche-funzionali.md#10-architettura-funzionale-django), [spec §14](specifiche-funzionali.md#14-roadmap) | Fase 3 | Chiarire con chi ha scritto le specifiche |
 
 ---
 
 ## 5. Modello dati
 
-I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da `core.BaseModel`: chiave primaria UUID (non indovinabile, §12), `created_at`, `updated_at`. `User` eredita da `AbstractUser`, ma ha anch'esso la chiave primaria UUID (nota sotto). Le FK tra app usano riferimenti stringa (`"trips.Trip"`).
+I nomi sono quelli delle entità del [spec §6](specifiche-funzionali.md#6-modello-informativo) tradotti in modelli. Tutti ereditano da `core.BaseModel`: chiave primaria UUID (non indovinabile, [spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)), `created_at`, `updated_at`. `User` eredita da `AbstractUser`, ma ha anch'esso la chiave primaria UUID (nota sotto). Le FK tra app usano riferimenti stringa (`"trips.Trip"`).
 
-| Entità §6 | Modello | App | Campi principali | FK / relazioni principali | Fase |
+| Entità [spec §6](specifiche-funzionali.md#6-modello-informativo) | Modello | App | Campi principali | FK / relazioni principali | Fase |
 | --- | --- | --- | --- | --- | --- |
 | Utente | `User(AbstractUser)` | `accounts` | id UUID (chiave primaria), email (unica, `USERNAME_FIELD`), name, photo, language (`it`/`en`), distance_unit (`km`/`mi`), default_currency, timezone, plan (`free`/`pro`, aggiornato da `billing`) | — | **0** |
-| (TRP-05 "follower") | `Follow` | `accounts` | follower, followed | FK `User` ×2, unica | 1 (minimo, senza feed: §16) |
+| (TRP-05 "follower") | `Follow` | `accounts` | follower, followed | FK `User` ×2, unica | 1 (minimo, senza feed: [spec §16](specifiche-funzionali.md#16-fuori-ambito-della-prima-versione)) |
 | Utente: caselle collegate | `ConnectedMailbox`, `MailboxReadLog` | `accounts` | provider, token cifrato, scope, revoked_at; log dei messaggi letti | FK `User` | 2 (ACC-06, RES-05) |
 | Viaggio | `Trip` | `trips` | title, cover, cover_source (`auto`/`custom`), start_date?, end_date?, timezone, visibility (`private`/`link`/`followers`/`public`), currency, budget_total?, archived, default_transport (Fase 2, TRP-13), inbound_token (casuale, per `trip+<token>@`), link_token | FK `owner → User` | 1A |
 | Destinazione del viaggio | `TripDestination` | `trips` | name, provider_ref, lat, lng, order | FK `Trip` | 1A |
@@ -209,14 +214,14 @@ I nomi sono quelli delle entità del §6 tradotti in modelli. Tutti ereditano da
 
 Note sul modello:
 
-- **Chiave primaria di `User`** *(Decisione proposta)*. `id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)`, come gli altri modelli. Motivi: lo stesso tipo di identificatore in tutto il dominio; id non indovinabili negli URL e nell'API (§12); la chiave primaria va fissata **prima della prima migrazione** di `accounts` (task 0.3), perché cambiarla dopo significa migrare tutte le FK verso `User`, comprese quelle delle app di Django e di allauth. *Alternativa:* lasciare la chiave intera di default (`DEFAULT_AUTO_FIELD`) e aggiungere un campo `public_id = UUIDField(unique=True, default=uuid.uuid4, editable=False)` da usare negli URL e nell'API. È più semplice da leggere nell'admin, ma obbliga a non esporre mai `pk` e a cercare sempre per `public_id`. Va scelta una delle due prima del task 0.3.
-- **Tipi di prenotazione.** Le specifiche hanno due elenchi diversi: RES-01 (volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato) e §6 (volo, alloggio, auto, treno, bus, traghetto, evento, altro). *Decisione proposta:* l'enum è l'unione dei due (`flight`, `lodging`, `car`, `restaurant`, `train`, `bus`, `ferry`, `cruise`, `event`, `other`). "Allegato" diventa un `Attachment` senza prenotazione.
-- **Mezzi di trasporto.** L'enum di `Leg` contiene già tutti i mezzi del §6. In Fase 1 l'interfaccia abilita auto, a piedi, trasporto pubblico e bici (ITN-04). Gli altri mezzi si abilitano in Fase 3 (ITN-10).
-- **Copertura del provider (§11).** Se il provider non fornisce una stima, `Leg.estimate_available = False` e l'interfaccia lo dice, senza inventare un tempo.
-- **Sezioni di sistema.** Creando un viaggio si creano le sezioni `itinerary`, `reservations` e `budget` con `is_system=True`, che non si cancellano (§6), e una lista "Senza titolo". I giorni restano `Day`, uno per data: non si adotta lo schema in cui il giorno è una sezione.
-- **Spostamento lista → giorno (PLC-06).** Il trascinamento singolo toglie la voce dalla lista e la mette nel giorno, in ordine. Copia e doppia appartenenza (la voce resta in lista e compare anche nel giorno) sono azioni esplicite, non l’effetto del trascinamento. Gli orari di visita restano su `PlaceItem` (§6); `DayEntry` tiene kind, ordine e nota e non duplica gli orari.
+- **Chiave primaria di `User`** *(Decisione proposta)*. `id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)`, come gli altri modelli. Motivi: lo stesso tipo di identificatore in tutto il dominio; id non indovinabili negli URL e nell'API ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)); la chiave primaria va fissata **prima della prima migrazione** di `accounts` (task 0.3), perché cambiarla dopo significa migrare tutte le FK verso `User`, comprese quelle delle app di Django e di allauth. *Alternativa:* lasciare la chiave intera di default (`DEFAULT_AUTO_FIELD`) e aggiungere un campo `public_id = UUIDField(unique=True, default=uuid.uuid4, editable=False)` da usare negli URL e nell'API. È più semplice da leggere nell'admin, ma obbliga a non esporre mai `pk` e a cercare sempre per `public_id`. Va scelta una delle due prima del task 0.3.
+- **Tipi di prenotazione.** Le specifiche hanno due elenchi diversi: RES-01 (volo, alloggio, auto, ristorante, treno, autobus, traghetto, crociera, allegato) e [spec §6](specifiche-funzionali.md#6-modello-informativo) (volo, alloggio, auto, treno, bus, traghetto, evento, altro). *Decisione proposta:* l'enum è l'unione dei due (`flight`, `lodging`, `car`, `restaurant`, `train`, `bus`, `ferry`, `cruise`, `event`, `other`). "Allegato" diventa un `Attachment` senza prenotazione.
+- **Mezzi di trasporto.** L'enum di `Leg` contiene già tutti i mezzi del [spec §6](specifiche-funzionali.md#6-modello-informativo). In Fase 1 l'interfaccia abilita auto, a piedi, trasporto pubblico e bici (ITN-04). Gli altri mezzi si abilitano in Fase 3 (ITN-10).
+- **Copertura del provider ([spec §11](specifiche-funzionali.md#11-integrazioni)).** Se il provider non fornisce una stima, `Leg.estimate_available = False` e l'interfaccia lo dice, senza inventare un tempo.
+- **Sezioni di sistema.** Creando un viaggio si creano le sezioni `itinerary`, `reservations` e `budget` con `is_system=True`, che non si cancellano ([spec §6](specifiche-funzionali.md#6-modello-informativo)), e una lista "Senza titolo". I giorni restano `Day`, uno per data: non si adotta lo schema in cui il giorno è una sezione.
+- **Spostamento lista → giorno (PLC-06).** Il trascinamento singolo toglie la voce dalla lista e la mette nel giorno, in ordine. Copia e doppia appartenenza (la voce resta in lista e compare anche nel giorno) sono azioni esplicite, non l’effetto del trascinamento. Gli orari di visita restano su `PlaceItem` ([spec §6](specifiche-funzionali.md#6-modello-informativo)); `DayEntry` tiene kind, ordine e nota e non duplica gli orari.
 - **Durabilità (TRP-12).** Lo spostamento è scritto sul server nella stessa operazione. Un reload del piano mostra il luogo nel giorno. Nessun pulsante «Salva».
-- **Budget e valuta di riferimento** sono campi di `Trip` (§6).
+- **Budget e valuta di riferimento** sono campi di `Trip` ([spec §6](specifiche-funzionali.md#6-modello-informativo)).
 
 ---
 
@@ -258,7 +263,7 @@ Regole (sostituiscono la regola "nessuna app importa modelli di un'altra" del pi
   - ACC-04: `accounts` emette `user_deleting`, `trips` gestisce il trasferimento o l'eliminazione dei viaggi;
   - BDG-07: `reservations` emette `reservation_priced`, `budget` crea la spesa proposta;
   - TRP-14: la conversione del viaggio in guida sta in `guides`.
-  - Export (§12, dalla 2.7): `accounts` definisce il segnale di raccolta dei dati dell'utente, ogni app con dati dell'utente vi risponde con un ricevitore.
+  - Export ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali), dalla 2.7): `accounts` definisce il segnale di raccolta dei dati dell'utente, ogni app con dati dell'utente vi risponde con un ricevitore.
 - **Controllo automatico** *(Decisione proposta)*: `import-linter` con un contratto `layers` in `WANDERLOG/.importlinter`, eseguito in CI.
 
 ---
@@ -291,8 +296,8 @@ Ruoli: **Vis** = visitatore anonimo, **Reg** = utente registrato non membro, **L
 
 Regole di applicazione:
 
-- **Prenotazioni, email e spese.** Restano visibili solo ai collaboratori anche quando il viaggio è pubblico. È l'interpretazione di §12 ("email di conferma … visibili solo ai collaboratori").
-- **Un solo punto di controllo:** la policy sta in `trips/policies.py` (`can_read`, `can_edit`, `can_manage`) e la usano, nello stesso modo, i permission class DRF, le view template, il consumer WebSocket (alla connessione e a ogni messaggio) e il download dei file (§10, "file e prenotazioni seguono il permesso del viaggio").
+- **Prenotazioni, email e spese.** Restano visibili solo ai collaboratori anche quando il viaggio è pubblico. È l'interpretazione di [spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali) ("email di conferma … visibili solo ai collaboratori").
+- **Un solo punto di controllo:** la policy sta in `trips/policies.py` (`can_read`, `can_edit`, `can_manage`) e la usano, nello stesso modo, i permission class DRF, le view template, il consumer WebSocket (alla connessione e a ogni messaggio) e il download dei file ([spec §10](specifiche-funzionali.md#10-architettura-funzionale-django), "file e prenotazioni seguono il permesso del viaggio").
 - **Limiti Pro** (SUB-03): `billing.services.has_feature(user, feature)` controlla lato server, mai solo nell'interfaccia.
 - **Test:** `trips/tests/test_permissions.py` è parametrizzato su questa matrice, con una riga per cella.
 
@@ -491,7 +496,7 @@ AWS_SECRET_ACCESS_KEY=
 AWS_STORAGE_BUCKET_NAME=
 AWS_S3_ENDPOINT_URL=
 FREE_ATTACHMENT_QUOTA_MB=                     # RES-06, valore da decidere
-MAX_UPLOAD_MB=20                              # §12, limite di upload
+MAX_UPLOAD_MB=20                              # spec §12, limite di upload
 ```
 
 Ogni adapter esterno (`maps`, cambi, voli, meteo, LLM, push, pagamenti) ha un'implementazione `mock` deterministica, usata quando la chiave è vuota e sempre nei test.
@@ -511,7 +516,7 @@ Ogni adapter esterno (`maps`, cambi, voli, meteo, LLM, push, pagamenti) ha un'im
 | Contratto API | schema OpenAPI generato e confrontato con quello del repo | CI | Ogni PR |
 | E2E | Playwright (pytest-playwright), servizio `e2e` del compose | `e2e/` nella radice | PR verso `main` e ogni notte |
 | Accessibilità | axe-core iniettato nei test Playwright *(Decisione proposta)* | `e2e/test_a11y.py` | PR verso `main` |
-| Prestazioni | viaggio di prova con 200 luoghi: risposta dell'API e apertura dell'editor sotto i 3 s (§12) | `e2e/test_performance.py` | Ogni notte |
+| Prestazioni | viaggio di prova con 200 luoghi: risposta dell'API e apertura dell'editor sotto i 3 s ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)) | `e2e/test_performance.py` | Ogni notte |
 
 Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTINGS_MODULE = WANDERLOG.settings`. Copertura minima *(Decisione proposta)*: 80% su ciascuna delle 14 app del progetto (dalla 2.7 anche `core`, `accounts`, `notifications`, `billing`, `maps`, `guides`, `checklists`, `lodging`, `assistant`, per coerenza: lo stesso criterio per ogni workstream). La suite `e2e/` è di B (Fase 1C); ogni workstream fornisce i dati e la revisione per i criteri del proprio blocco.
 
@@ -519,20 +524,20 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 
 | File | Criterio |
 | --- | --- |
-| `e2e/test_acc15_01_viaggio_5_giorni.py` | §15.1 e criterio TRP-01 ("Roma", 12–16 giugno → 5 giorni vuoti e Roma sulla mappa) |
-| `e2e/test_acc15_02_dieci_luoghi.py` | §15.2: 10 luoghi, da ricerca e da una guida (criterio GDE-03: luogo aggiunto al giorno 2 e visibile sulla mappa) |
-| `e2e/test_acc15_03_orari_distanze.py` | §15.3: distribuzione sui giorni, orari, tempi e distanze (ITN-01..03). Dopo lo spostamento di un luogo dalla lista a un giorno, un reload lo mostra ancora in quel giorno, con la tratta verso la tappa successiva |
-| `e2e/test_acc15_04_mappa_filtrata.py` | §15.4: pin filtrati per giorno (MAP-03) |
-| `e2e/test_acc15_05_compagno_live.py` | §15.5: due browser; il secondo, con ruolo modifica, vede l'aggiornamento entro 5 s (§12 Sync) |
-| `e2e/test_acc15_06_volo_manuale_email.py` | §15.6 e criterio RES-03: volo inserito a mano più volo da email di prova, visibile nel giorno corretto entro 60 s |
-| `e2e/test_acc15_07_budget_bivaluta.py` | §15.7: spese in EUR e in un'altra valuta, totale convertito e saldo tra i due |
-| `e2e/test_acc15_08_checklist.py` | §15.8: spunta di una checklist di bagaglio |
-| `e2e/test_acc15_09_altro_browser.py` | §15.9: nuovo contesto browser con lo stesso account, dati integri |
+| `e2e/test_acc15_01_viaggio_5_giorni.py` | [spec §15.1](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio) e criterio TRP-01 ("Roma", 12–16 giugno → 5 giorni vuoti e Roma sulla mappa) |
+| `e2e/test_acc15_02_dieci_luoghi.py` | [spec §15.2](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): 10 luoghi, da ricerca e da una guida (criterio GDE-03: luogo aggiunto al giorno 2 e visibile sulla mappa) |
+| `e2e/test_acc15_03_orari_distanze.py` | [spec §15.3](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): distribuzione sui giorni, orari, tempi e distanze (ITN-01..03). Dopo lo spostamento di un luogo dalla lista a un giorno, un reload lo mostra ancora in quel giorno, con la tratta verso la tappa successiva |
+| `e2e/test_acc15_04_mappa_filtrata.py` | [spec §15.4](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): pin filtrati per giorno (MAP-03) |
+| `e2e/test_acc15_05_compagno_live.py` | [spec §15.5](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): due browser; il secondo, con ruolo modifica, vede l'aggiornamento entro 5 s ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali) Sync) |
+| `e2e/test_acc15_06_volo_manuale_email.py` | [spec §15.6](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio) e criterio RES-03: volo inserito a mano più volo da email di prova, visibile nel giorno corretto entro 60 s |
+| `e2e/test_acc15_07_budget_bivaluta.py` | [spec §15.7](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): spese in EUR e in un'altra valuta, totale convertito e saldo tra i due |
+| `e2e/test_acc15_08_checklist.py` | [spec §15.8](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): spunta di una checklist di bagaglio |
+| `e2e/test_acc15_09_altro_browser.py` | [spec §15.9](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio): nuovo contesto browser con lo stesso account, dati integri |
 | `e2e/test_itn07_ottimizzazione.py` | Criterio ITN-07 (Fase 2) |
 
 ---
 
-## 12. Sicurezza e privacy (§12, §13)
+## 12. Sicurezza e privacy (spec §12, §13)
 
 | Tema | Misura | Fase |
 | --- | --- | --- |
@@ -546,33 +551,33 @@ Configurazione: `WANDERLOG/pytest.ini` (accanto a `manage.py`) con `DJANGO_SETTI
 | Limitazione delle richieste | *Decisione proposta:* throttling DRF su login, registrazione, recupero password, inviti, assistente | 1 |
 | WebSocket | `AllowedHostsOriginValidator`, autenticazione di sessione, policy `can_read`/`can_edit` sul viaggio | 1A |
 | CORS | Disattivato in Fase 1 (stessa origine). In Fase 2 lista esplicita per l'app (*Decisione proposta:* `django-cors-headers`) | 2 |
-| Gmail (RES-05, ACC-06) | Opt-in, scope minimo, token cifrati (`FIELD_ENCRYPTION_KEY`), revoca immediata, `MailboxReadLog` di ciò che è stato letto (§11) | 2 |
+| Gmail (RES-05, ACC-06) | Opt-in, scope minimo, token cifrati (`FIELD_ENCRYPTION_KEY`), revoca immediata, `MailboxReadLog` di ciò che è stato letto ([spec §11](specifiche-funzionali.md#11-integrazioni)) | 2 |
 | Pagamenti | Firma dei webhook Stripe verificata, stato dell'abbonamento solo dai webhook, limiti lato server (SUB-03) | 2 |
-| LLM | Si invia al modello solo la parte di piano necessaria. L'utente è informato e ogni risposta ha l'avviso di inaccuratezza (§11, AI-05) | 2 |
+| LLM | Si invia al modello solo la parte di piano necessaria. L'utente è informato e ogni risposta ha l'avviso di inaccuratezza ([spec §11](specifiche-funzionali.md#11-integrazioni), AI-05) | 2 |
 | Cancellazione dell'account (ACC-04) | Viaggi di cui si è unici proprietari: trasferiti o eliminati. Viaggi condivisi: restano agli altri collaboratori | 1 |
-| Export (§12 Disponibilità) | Archivio scaricabile (JSON più allegati) generato da un task Celery in `accounts` (A, dalla 2.7) e inviato via link firmato | 1 |
-| Pagine legali (§9) | Termini, privacy, cookie, in `core`. La privacy policy documenta l'analisi della posta (§13) | 1 |
-| Licenze dei contenuti (§13) | Recensioni e foto mostrate solo se la licenza del provider (D1) lo permette, con attribuzione. Nessuno scraping di Wanderlog. Fixture con contenuti originali | 1 |
+| Export ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali) Disponibilità) | Archivio scaricabile (JSON più allegati) generato da un task Celery in `accounts` (A, dalla 2.7) e inviato via link firmato | 1 |
+| Pagine legali ([spec §9](specifiche-funzionali.md#9-schermate)) | Termini, privacy, cookie, in `core`. La privacy policy documenta l'analisi della posta ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) | 1 |
+| Licenze dei contenuti ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) | Recensioni e foto mostrate solo se la licenza del provider (D1) lo permette, con attribuzione. Nessuno scraping di Wanderlog. Fixture con contenuti originali | 1 |
 | Admin | Django admin solo per staff e admin, con 2FA *(Decisione proposta, allauth MFA)*. Il login dell'admin non passa da allauth (niente rate limit né 2FA): la documentazione di allauth indica `admin.site.login = secure_admin_login(admin.site.login)` in `urls.py` | 1 |
 
 ---
 
 ## 13. i18n e accessibilità (Fase 1, non rimandabili)
 
-i18n (§4.1 punto 6, §12, NEW-01):
+i18n ([spec §4.1](specifiche-funzionali.md#41-principi) punto 6, [spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali), NEW-01):
 
 - `LANGUAGE_CODE = "it"`, `LANGUAGES = [("it", "Italiano"), ("en", "English")]`, `LocaleMiddleware`, `LOCALE_PATHS`. Pagine pubbliche con `i18n_patterns` (`/it/…`, `/en/…`). `TIME_ZONE = "UTC"` con fuso dell'utente e del viaggio salvati nei modelli.
-- La lingua dell'utente (`User.language`) prevale sull'header del browser. È presente un selettore di lingua (home autenticata, §3).
+- La lingua dell'utente (`User.language`) prevale sull'header del browser. È presente un selettore di lingua (home autenticata, [spec §3](specifiche-funzionali.md#3-cosa-fa-wanderlog)).
 - Formati di data, numero e valuta localizzati. Distanze in km o miglia secondo `User.distance_unit` (ACC-03, NEW-01).
-- Contenuti editoriali: `Guide.language` e `Destination.language`; il contenuto indica la propria lingua (§12).
+- Contenuti editoriali: `Guide.language` e `Destination.language`; il contenuto indica la propria lingua ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)).
 - Template e partial tradotti con `{% translate %}` e `{% blocktranslate %}`; le poche stringhe dell'isola della mappa arrivano dal template (`json_script`). CI: `makemessages` senza stringhe nuove non tradotte e `compilemessages`.
 
-Accessibilità (§12, NEW-12):
+Accessibilità ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali), NEW-12):
 
 - Form etichettati, focus visibile, contrasto AA, alternative testuali (`aria-label`) per tutte le azioni a icona dell'editor.
 - Riordino accessibile da tastiera: pulsanti "su/giù" (richieste HTMX) come alternativa al trascinamento, con annunci per i lettori di schermo in una regione `aria-live` (*Decisione proposta*). Il trascinamento di PLC-05 richiede JavaScript oltre l'isola della mappa: vedi §21.11.
-- Su mobile l'editor passa a schede (MAP-01, §9).
-- Test axe-core senza violazioni "serious" o "critical" sulle pagine dei test §15.
+- Su mobile l'editor passa a schede (MAP-01, [spec §9](specifiche-funzionali.md#9-schermate)).
+- Test axe-core senza violazioni "serious" o "critical" sulle pagine dei test [spec §15](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio).
 
 ---
 
@@ -710,10 +715,10 @@ Questa fase evita che `places`, `itinerary`, `reservations`, `budget` e `checkli
 **1A.1 `trips` (Dev B):** `Trip`, `TripDestination`, `Day`, `Section`, `Membership`, `Invite`, `ActivityEntry`, `NoteRevision`. Servizi `create_trip` (sezioni di sistema e giorni generati dalle date), `record_activity`. Policy `trips/policies.py` e test della matrice §7.
 **1A.2 `maps` (Dev C):** interfacce `PlaceProvider`, `RouteProvider`, `Geocoder`, `MockProvider` deterministico, selezione con `MAPS_PROVIDER`. Generatori di deep link per Google Maps e Apple Maps (ITN-05).
 **1A.3 `places` (Dev C), dopo D1:** `Place` (campi salvati secondo la licenza D1, con `fetched_at`), `PlaceItem`, `ListEntry`.
-**1A.4 `itinerary` (Dev C):** `DayEntry`, `Leg`. Servizio `recompute_legs(day)` invocato dalla richiesta che sposta o riordina le tappe: la risposta include durata, distanza e geometria (ITN-01, ITN-03). Celery serve al ritento se il provider non risponde, non è l’unico percorso. Senza stima, `estimate_available = False` (§11).
+**1A.4 `itinerary` (Dev C):** `DayEntry`, `Leg`. Servizio `recompute_legs(day)` invocato dalla richiesta che sposta o riordina le tappe: la risposta include durata, distanza e geometria (ITN-01, ITN-03). Celery serve al ritento se il provider non risponde, non è l’unico percorso. Senza stima, `estimate_available = False` ([spec §11](specifiche-funzionali.md#11-integrazioni)).
 **1A.5 Realtime (Dev B):** consumer `ws/trips/<uuid>/`, gruppo `trip_<uuid>`, broadcast `on_commit` dai servizi.
 **1A.6 Preparazione di `reservations` (Dev D, in parallelo):** fixture `.eml` di esempio scritte dal team (niente email reali) in `reservations/tests/fixtures/emails/`, almeno una per ogni fornitore che il team vuole riconoscere più una non riconoscibile; parser per fornitore come funzioni pure (contenuto dell'email → dati strutturati), senza modelli, con i loro test. In 1B i parser si collegano a `InboundEmail` e `Reservation` (*Decisione proposta*).
-**1A.7 Preparazione dei contenuti di `guides` e `checklists` (Dev E, in parallelo):** testi originali (§13) di destinazioni, di almeno una guida con 2 giorni e dei modelli di checklist città, mare, montagna, bambino (CHK-02), in `it` ed `en`, in file di dati versionati nelle due app; diventano fixture appena esistono i modelli (1B). Contenuti approvati in review (chi li approva per la produzione è il §21, punto 62).
+**1A.7 Preparazione dei contenuti di `guides` e `checklists` (Dev E, in parallelo):** testi originali ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) di destinazioni, di almeno una guida con 2 giorni e dei modelli di checklist città, mare, montagna, bambino (CHK-02), in `it` ed `en`, in file di dati versionati nelle due app; diventano fixture appena esistono i modelli (1B). Contenuti approvati in review (chi li approva per la produzione è il §21, punto 62).
 
 Checkpoint della Fase 1A:
 ```bash
@@ -727,13 +732,13 @@ Criteri: `create_trip(title="Roma", start=12/06, end=16/06)` crea 5 `Day`, le se
 
 ### Fase 1B — Flussi verticali P1 (in parallelo)
 
-Corrisponde a §14 Fase 1 e ai criteri del §15. Ogni dev chiude il proprio blocco con test e checkpoint.
+Corrisponde a [spec §14](specifiche-funzionali.md#14-roadmap) Fase 1 e ai criteri del [spec §15](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio). Ogni dev chiude il proprio blocco con test e checkpoint.
 
 1. **A, account e piattaforma:** ACC-01 (email/password + Google con allauth), ACC-02, ACC-03 (incluse le unità km/miglia, NEW-01), ACC-04 (segnale `user_deleting` gestito da `trips`), ACC-05 (bozza del visitatore nella sessione Django, lato server, salvata sull'account dopo la registrazione; *Decisione proposta* adattata a D2, prima era in `localStorage`; l'endpoint `POST /api/v1/trips/import-draft/` resta per l'app della Fase 2). Email di invito (`notifications`). Pagine legali. Export JSON + allegati in `accounts` (§21, punto 20: `accounts` definisce un segnale di raccolta dei dati, ogni app con dati dell'utente vi contribuisce con un ricevitore, nel rispetto del §6). Throttling. Admin per staff.
 2. **B, viaggi e collaborazione:** TRP-01..06, TRP-09 (anticipato dalla Fase 2, *Decisione proposta*; = NEW-11, giorno corrente evidenziato), TRP-12 (salvataggio automatico; annulla/ripeti come pila di comandi per utente e viaggio tenuta sul server, che esegue l'operazione inversa tramite i servizi, ogni operazione registrata in `ActivityEntry`; *Decisione proposta* adattata a D2, che non prevede JavaScript nell'editor oltre alla mappa), COL-01..04 (COL-03: sulla stessa nota vince l'ultimo salvataggio, la versione sovrascritta resta in `NoteRevision` ed è recuperabile dal registro attività). Servizi di lettura del viaggio ed eventi per TRP-11 di E.
-3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, §11), MAP-01..04 (vista affiancata su desktop, schede su mobile). Lo spostamento lista → giorno è un’unica operazione di `places`/`itinerary`: toglie la `ListEntry`, crea la `DayEntry` e restituisce le tratte ricalcolate. Il reload mostra il luogo nel giorno (TRP-12).
-4. **D, prenotazioni e budget:** RES-01, RES-02, RES-09; RES-03/04 (indirizzo `trip+<token>@`, `InboundEmail`, parser per fornitore in Celery, stato delle importazioni, email non riconosciute salvate come `Attachment` con avviso); BDG-01..05; **BDG-06 anticipato** (richiesto da §14 Fase 1 "budget con conversione" e §15.7; = NEW-02): tasso del giorno della spesa, modificabile, totale nella valuta del viaggio con l'importo originale visibile.
-5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide (§13) dai contenuti di 1A.7, TRP-11 (diario di base in `guides`: `Journal` e `JournalStop` con fermate fatte, note e percorso sulla mappa, raggiungibile dalla pagina del viaggio; il completo è GDE-08 in Fase 2).
+3. **C, luoghi, mappa, itinerario:** PLC-01..06, ITN-01..06 (ITN-04 con la **bici**, NEW-03; tratte senza stima segnalate, [spec §11](specifiche-funzionali.md#11-integrazioni)), MAP-01..04 (vista affiancata su desktop, schede su mobile). Lo spostamento lista → giorno è un’unica operazione di `places`/`itinerary`: toglie la `ListEntry`, crea la `DayEntry` e restituisce le tratte ricalcolate. Il reload mostra il luogo nel giorno (TRP-12).
+4. **D, prenotazioni e budget:** RES-01, RES-02, RES-09; RES-03/04 (indirizzo `trip+<token>@`, `InboundEmail`, parser per fornitore in Celery, stato delle importazioni, email non riconosciute salvate come `Attachment` con avviso); BDG-01..05; **BDG-06 anticipato** (richiesto da [spec §14](specifiche-funzionali.md#14-roadmap) Fase 1 "budget con conversione" e [spec §15.7](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio); = NEW-02): tasso del giorno della spesa, modificabile, totale nella valuta del viaggio con l'importo originale visibile.
+5. **E, scoperta e checklist:** GDE-01..04 (guide editoriali in sola lettura scritte dallo staff dall'admin; "Aggiungi al viaggio" su lista o giorno), CHK-01, CHK-02 (modelli città, mare, montagna, bambino, in `it` ed `en`), fixture originali di destinazioni e guide ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) dai contenuti di 1A.7, TRP-11 (diario di base in `guides`: `Journal` e `JournalStop` con fermate fatte, note e percorso sulla mappa, raggiungibile dalla pagina del viaggio; il completo è GDE-08 in Fase 2).
 
 Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; endpoint presenti nello schema OpenAPI; test dei permessi per ogni nuovo endpoint; stringhe tradotte in `it` ed `en`.
 
@@ -741,18 +746,18 @@ Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; e
 
 - Seed (B): `python manage.py seed_demo` (destinazione, guida con 2 giorni, luoghi mock, modelli di checklist). Il comando sta in `trips` e carica con `loaddata` le fixture fornite dalle altre app (E: destinazioni, guide, modelli di checklist; C: luoghi mock), senza importarne il codice (§6) *(Decisione proposta)*.
 - Test e2e (B): B possiede `e2e/` e porta a verde i 9 test `e2e/test_acc15_*`, `e2e/test_a11y.py` e `e2e/test_performance.py`; ogni workstream rivede i test dei criteri del proprio blocco.
-- Checkpoint (criterio della fase = §15):
+- Checkpoint (criterio della fase = [spec §15](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio)):
   ```bash
   docker compose exec django python manage.py seed_demo
   docker compose --profile e2e run --rm e2e        # tutti i 9 test e2e/test_acc15_* verdi, più a11y
   docker compose exec django pytest -q              # tutta la suite verde, copertura minima rispettata
   ```
-  Più `e2e/test_performance.py`: viaggio con 200 luoghi aperto in meno di 3 s (§12).
+  Più `e2e/test_performance.py`: viaggio con 200 luoghi aperto in meno di 3 s ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)).
 - D4 e D9 decise prima del rilascio pubblico.
 
 ---
 
-### Fase 2 — Parità da viaggio (P2, §14 Fase 2)
+### Fase 2 — Parità da viaggio (P2, spec §14 Fase 2)
 
 | Blocco | Requisiti | Dev |
 | --- | --- | --- |
@@ -776,7 +781,7 @@ Checkpoint di ogni blocco: `docker compose exec django pytest -q <app>` verde; e
 
 Checkpoint della Fase 2: test di ogni requisito verde; `e2e/test_itn07_ottimizzazione.py` verde; test SUB-03 (chiamata API a una funzione Pro con utente free → 403, anche con l'interfaccia aggirata); suite e2e della Fase 1 ancora verde.
 
-### Fase 3 — Estensioni (P3, §14 Fase 3)
+### Fase 3 — Estensioni (P3, spec §14 Fase 3)
 
 TRP-10 / NEW-07 (calendario, B), PLC-09 / NEW-08 (attività senza luogo, C), ITN-09 (ottimizzazione con orari fissati e finestre di apertura, C), ITN-10 (treno, traghetto, taxi, volo interno, C), MAP-07 / NEW-06 (meteo sul giorno, C), RES-10 (pacchetto conteggiato una volta: completa NEW-05, D), NEW-04 (campi treno, bus e traghetto, D), BDG-08 (CSV, D), COL-06 / NEW-10 (voto di gruppo, C), GDE-09 (guide offline nell'app, E), HOT-07 (voli e noleggi, E), AI-06 (profilo del gruppo, E), EXT-01 (API per salvare un luogo, C), EXT-02 (dati degli alloggi, E) per l'estensione browser, NEW-09 (Pro mensile, A), "racconti" (D13, E).
 
@@ -797,11 +802,11 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | ACC-05 | P1 | 1B | accounts, trips | A | Bozza del visitatore nella sessione Django, poi sull'account (D2); `import-draft` resta per l'app |
 | ACC-06 | P2 | 2 | accounts | A | Con RES-05 |
 | ACC-07 | P2 | 2 | accounts | A | Usa `Follow` |
-| TRP-01 | P1 | 1A/1B | trips | B | Criterio TRP-01, test §15.1 |
+| TRP-01 | P1 | 1A/1B | trips | B | Criterio TRP-01, test [spec §15.1](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio) |
 | TRP-02 | P1 | 1B | trips | B | Conferma prima di eliminare giorni |
 | TRP-03 | P1 | 1B | trips | B | |
 | TRP-04 | P1 | 1B | trips | B | Eliminazione solo del proprietario |
-| TRP-05 | P1 | 1B | trips | B | 4 livelli del §6 |
+| TRP-05 | P1 | 1B | trips | B | 4 livelli del [spec §6](specifiche-funzionali.md#6-modello-informativo) |
 | TRP-06 | P1 | 1B | trips, maps | B | Copertina dal provider, sostituibile |
 | TRP-07 | P2 | 2 | trips | B | |
 | TRP-08 | P2 | 2 | trips | B | |
@@ -832,7 +837,7 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | ITN-10 | P3 | 3 | itinerary | C | |
 | MAP-01 | P1 | 1B | editor | C | |
 | MAP-02 | P1 | 1B | editor | C | |
-| MAP-03 | P1 | 1B | editor | C | Test §15.4 |
+| MAP-03 | P1 | 1B | editor | C | Test [spec §15.4](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio) |
 | MAP-04 | P1 | 1B | editor, itinerary | C | |
 | MAP-05 | P2 | 2 | maps | C | Pro |
 | MAP-06 | P2 | 2 | guides, maps | C + E | C: template e isola in `maps`; E: pagina in `guides` (§3). Termini del provider (D1) |
@@ -852,7 +857,7 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | BDG-03 | P1 | 1B | budget | D | |
 | BDG-04 | P1 | 1B | budget | D | Saldo di gruppo |
 | BDG-05 | P1 | 1B | budget | D | |
-| BDG-06 | P2 | **1B** | budget | D | Anticipato: §14 Fase 1 e §15.7; = NEW-02 |
+| BDG-06 | P2 | **1B** | budget | D | Anticipato: [spec §14](specifiche-funzionali.md#14-roadmap) Fase 1 e [spec §15.7](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio); = NEW-02 |
 | BDG-07 | P2 | 2 | budget | D | Parte di NEW-05 |
 | BDG-08 | P3 | 3 | budget | D | |
 | CHK-01 | P1 | 1B | checklists | E | |
@@ -866,7 +871,7 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | COL-05 | P2 | 2 | trips | B | |
 | COL-06 | P3 | 3 | places | C | = NEW-10 |
 | GDE-01 | P1 | 1B | guides | E | |
-| GDE-02 | P1 | 1B | guides, places | E | Recensioni solo se la licenza lo permette (§13) |
+| GDE-02 | P1 | 1B | guides, places | E | Recensioni solo se la licenza lo permette ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) |
 | GDE-03 | P1 | 1B | guides | E | Criterio GDE-03 |
 | GDE-04 | P1 | 1B | guides | E | |
 | GDE-05 | P2 | 2 | guides | E | D6 |
@@ -898,7 +903,7 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | NEW-01 | — | 1B | accounts | A | Con ACC-03 e i18n |
 | NEW-02 | — | 1B | budget | D | = BDG-06 |
 | NEW-03 | — | 1B | itinerary | C | = ITN-04 |
-| NEW-04 | — | 3 | reservations | D | §14 Fase 3 "treni e traghetti strutturati" |
+| NEW-04 | — | 3 | reservations | D | [spec §14](specifiche-funzionali.md#14-roadmap) Fase 3 "treni e traghetti strutturati" |
 | NEW-05 | — | 2 + 3 | budget, reservations | D | BDG-07 in 2, RES-10 in 3 |
 | NEW-06 | — | 3 | maps | C | |
 | NEW-07 | — | 3 | trips | B | = TRP-10 |
@@ -906,9 +911,9 @@ Totale: **117 ID**. La priorità è quella delle specifiche. Dove la fase differ
 | NEW-09 | — | 3 | billing | A | |
 | NEW-10 | — | 3 | places | C | = COL-06 |
 | NEW-11 | — | 1B | trips | B | = TRP-09 |
-| NEW-12 | — | **1** | editor, tutte | tutti | Accessibilità (§12) |
+| NEW-12 | — | **1** | editor, tutte | tutti | Accessibilità ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)) |
 
-Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Salvataggio 1B; Sync 1A/1B (test §15.5); Privacy 1 (account, export) e 2 (caselle); Sicurezza 0–2 (§12 di questo piano); Accessibilità 1; Offline 2; Disponibilità (export) 1; Modello (suggerimenti come proposte, orario del volo modificabile) 1B/2.
+Requisiti non funzionali ([spec §12](specifiche-funzionali.md#12-requisiti-non-funzionali)) → fase: Lingue 0/1; Prestazioni 1C (test); Salvataggio 1B; Sync 1A/1B (test [spec §15.5](specifiche-funzionali.md#15-criteri-di-accettazione-del-primo-rilascio)); Privacy 1 (account, export) e 2 (caselle); Sicurezza 0–2 (§12 di questo piano); Accessibilità 1; Offline 2; Disponibilità (export) 1; Modello (suggerimenti come proposte, orario del volo modificabile) 1B/2.
 
 ---
 
@@ -920,7 +925,7 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 - Un campo su un modello di un'altra app si chiede con una issue al proprietario. Nessuna migrazione nelle app altrui.
 - Contratto API stabile da `/api/v1/`; una modifica incompatibile richiede una nuova versione.
 - Ogni decisione D1..D13 presa diventa un ADR in `docs/adr/`.
-- I dati di sviluppo sono originali (§13): niente scraping, niente testi o foto di Wanderlog.
+- I dati di sviluppo sono originali ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)): niente scraping, niente testi o foto di Wanderlog.
 
 ## 17. Rischi principali
 
@@ -934,7 +939,7 @@ Requisiti non funzionali (§12) → fase: Lingue 0/1; Prestazioni 1C (test); Sal
 
 ## 18. Fuori perimetro
 
-- Funzioni del §16 delle specifiche: prenotazione diretta di voli e hotel, navigazione turn-by-turn, rete sociale ampia (il `Follow` serve solo alla visibilità `followers`), biglietteria treni, white label.
+- Funzioni del [spec §16](specifiche-funzionali.md#16-fuori-ambito-della-prima-versione): prenotazione diretta di voli e hotel, navigazione turn-by-turn, rete sociale ampia (il `Follow` serve solo alla visibilità `followers`), biglietteria treni, white label.
 - Sviluppo dell'app mobile (D5): il piano prepara solo l'API (Fase 2).
 - Estensione browser: solo in Fase 3 (EXT-01/02).
 - Le voci di `docs/PlaneIT.docx` elencate al §19 come non recepite: carrello e pagamenti di prenotazioni, SIM ed eSIM, biglietti di attrazioni, margine di overbooking, marketplace delle guide con quota, gamification, impatto dei trasporti, filtri di accessibilità del viaggio, fotolibro, stima di costo a ogni tappa, recensioni del sito e bacheca news.
@@ -980,10 +985,10 @@ La 2.3 elencava quattro punti in cui le specifiche v1.1 si contraddicevano. Sono
 
 | Punto | Contraddizione (specifiche v1.1) | Decisione | Dove è stato corretto (specifiche v1.2) |
 | --- | --- | --- | --- |
-| Livelli di visibilità | §3 e GDE-08 ("stesse tre scelte del piano") contro §6 e TRP-05 (privato, link, follower, pubblico) | Quattro livelli, anche per il diario. Decisione di Mauro Spinarelli, 1/11/2026 | §3 (nota: Wanderlog ne ha tre, il prodotto quattro); GDE-08 "stesse quattro scelte del piano (TRP-05)" |
-| Ricerca alloggi: Fase 1 o 2 | §4.2 (canale "Sito Django", fase 1) contro §14 Fase 2 e HOT-01..06 (P2) | Fase 2, come già nel piano | §4.2 (tolta dal canale di fase 1, rimando a fase 2); §9 "Ricerca alloggi (fase 2)" |
+| Livelli di visibilità | [spec §3](specifiche-funzionali.md#3-cosa-fa-wanderlog) e GDE-08 ("stesse tre scelte del piano") contro [spec §6](specifiche-funzionali.md#6-modello-informativo) e TRP-05 (privato, link, follower, pubblico) | Quattro livelli, anche per il diario. Decisione di Mauro Spinarelli, 1/11/2026 | [spec §3](specifiche-funzionali.md#3-cosa-fa-wanderlog) (nota: Wanderlog ne ha tre, il prodotto quattro); GDE-08 "stesse quattro scelte del piano (TRP-05)" |
+| Ricerca alloggi: Fase 1 o 2 | [spec §4.2](specifiche-funzionali.md#42-canali) (canale "Sito Django", fase 1) contro [spec §14](specifiche-funzionali.md#14-roadmap) Fase 2 e HOT-01..06 (P2) | Fase 2, come già nel piano | [spec §4.2](specifiche-funzionali.md#42-canali) (tolta dal canale di fase 1, rimando a fase 2); [spec §9](specifiche-funzionali.md#9-schermate) "Ricerca alloggi (fase 2)" |
 | Versione delle specifiche | Commit `db2b15d` ("V.1.0") contro l'intestazione del file ("Versione documento: 1.1") | Vale l'intestazione del file; ora 1.2 | Intestazione e nota "Modifiche 1.2" |
-| Numero di app | §10 elenca 13 app; il repository ne ha 14 (`core`) | `core` resta: `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri | §10: riga `core` (14 app) |
+| Numero di app | [spec §10](specifiche-funzionali.md#10-architettura-funzionale-django) elenca 13 app; il repository ne ha 14 (`core`) | `core` resta: `BaseModel`, health, home e pagine legali (§1); non ha requisiti propri | [spec §10](specifiche-funzionali.md#10-architettura-funzionale-django): riga `core` (14 app) |
 
 ## 21. Dettagli da concordare
 
@@ -1101,7 +1106,7 @@ Proprietario dei punti 52-62 (2.7): A, con i contributi di tutti i workstream (p
 | 59 | Nuove variabili `SECURE_HSTS_SECONDS` e `STATIC_ROOT` in `.env.example` | `3600` e `/app/staticfiles` | 15 · Fase 1C |
 | 60 | Chi custodisce le variabili di produzione | Solo chi gestisce il rilascio (insegnante o responsabile indicato) | 15 · Fase 1C |
 | 61 | Quote e costi del provider di mappe in produzione | Nessuno (dopo D1) | 15 · Fase 1C |
-| 62 | Chi approva i contenuti editoriali originali del seed di produzione (§13) | Nessuno | 15 · Fase 1C |
+| 62 | Chi approva i contenuti editoriali originali del seed di produzione ([spec §13](specifiche-funzionali.md#13-vincoli-legali-e-di-prodotto)) | Nessuno | 15 · Fase 1C |
 
 ### 21.11 Frontend (D2)
 
